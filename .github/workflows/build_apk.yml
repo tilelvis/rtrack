@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Semantic version (e.g. 1.2.0). Leave empty to keep current.'
+        description: 'Semantic version (e.g. 1.2.0). Leave empty to auto-bump patch version.'
         required: false
         default: ''
       build_number:
@@ -12,13 +12,13 @@ on:
         required: false
         default: ''
       build_type:
-        description: 'Build type'
+        description: 'Build type — release produces a signed installable APK'
         required: true
         type: choice
-        default: 'debug'
+        default: 'release'
         options:
-          - debug
           - release
+          - debug
 
 permissions:
   contents: write
@@ -49,47 +49,95 @@ jobs:
       - name: Read current version from pubspec
         id: current_version
         run: |
-          CURRENT=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)
-          CURRENT_BUILD=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 2)
-          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
-          echo "current_build=$CURRENT_BUILD" >> $GITHUB_OUTPUT
-          echo "Current version: $CURRENT+$CURRENT_BUILD"
+          # Use grep -m 1 to ensure only the FIRST 'version:' line is matched.
+          # Use a strict regex + head -1 as a belt-and-braces guard against
+          # duplicate version lines or trailing comments in pubspec.yaml.
+          VERSION_LINE=$(grep -m 1 -E '^version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+' pubspec.yaml | head -1)
+          if [ -z "$VERSION_LINE" ]; then
+            echo "::error::Could not find a valid 'version: X.Y.Z+N' line in pubspec.yaml"
+            echo "::error::Found these lines starting with 'version:':"
+            grep -n '^version:' pubspec.yaml || echo "(none)"
+            exit 1
+          fi
+          # Extract the value (e.g. "1.1.0+2") — second whitespace-separated field
+          VERSION_VALUE=$(echo "$VERSION_LINE" | awk '{print $2}')
+          CURRENT=$(echo "$VERSION_VALUE" | cut -d '+' -f 1)
+          CURRENT_BUILD=$(echo "$VERSION_VALUE" | cut -d '+' -f 2)
+          # Sanity-check: no embedded newlines
+          if ! echo "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Parsed version '$CURRENT' is not a valid X.Y.Z string"
+            exit 1
+          fi
+          if ! echo "$CURRENT_BUILD" | grep -qE '^[0-9]+$'; then
+            echo "::error::Parsed build '$CURRENT_BUILD' is not a valid integer"
+            exit 1
+          fi
+          # Single-line writes to GITHUB_OUTPUT (no embedded newlines possible)
+          echo "current_version=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "current_build=$CURRENT_BUILD" >> "$GITHUB_OUTPUT"
+          echo "Current version: ${CURRENT}+${CURRENT_BUILD}"
 
       - name: Compute new version & build number
         id: bump
         run: |
+          CURRENT_VERSION="${{ steps.current_version.outputs.current_version }}"
+          CURRENT_BUILD="${{ steps.current_version.outputs.current_build }}"
+
+          # --- Semantic version ---
+          # If the user supplied a version, use it. Otherwise AUTO-BUMP the
+          # patch component (e.g. 1.1.0 -> 1.1.1, 1.2.3 -> 1.2.4).
           if [ -n "${{ github.event.inputs.version }}" ]; then
             NEW_VERSION="${{ github.event.inputs.version }}"
           else
-            NEW_VERSION="${{ steps.current_version.outputs.current_version }}"
+            MAJOR=$(echo "$CURRENT_VERSION" | cut -d '.' -f 1)
+            MINOR=$(echo "$CURRENT_VERSION" | cut -d '.' -f 2)
+            PATCH=$(echo "$CURRENT_VERSION" | cut -d '.' -f 3)
+            NEW_PATCH=$((PATCH + 1))
+            NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+            echo "Auto-bumped patch: $CURRENT_VERSION -> $NEW_VERSION"
           fi
 
+          # --- Build number ---
+          # If the user supplied a build number, use it. Otherwise auto-increment.
           if [ -n "${{ github.event.inputs.build_number }}" ]; then
             NEW_BUILD="${{ github.event.inputs.build_number }}"
           else
-            BASE="${{ steps.current_version.outputs.current_build }}"
-            NEW_BUILD=$((BASE + 1))
+            NEW_BUILD=$((CURRENT_BUILD + 1))
+            echo "Auto-incremented build: $CURRENT_BUILD -> $NEW_BUILD"
           fi
 
+          # Validate
           if ! echo "$NEW_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "::error::Invalid semantic version '$NEW_VERSION'. Expected format like 1.0.0"
             exit 1
           fi
-
           if ! echo "$NEW_BUILD" | grep -Eq '^[0-9]+$'; then
             echo "::error::Invalid build number '$NEW_BUILD'. Must be integer."
             exit 1
           fi
 
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_build=$NEW_BUILD" >> $GITHUB_OUTPUT
-          echo "Bumping to: $NEW_VERSION+$NEW_BUILD"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_build=$NEW_BUILD" >> "$GITHUB_OUTPUT"
+          echo "Bumping to: ${NEW_VERSION}+${NEW_BUILD}"
 
       - name: Update pubspec.yaml version
         run: |
-          sed -i "s/^version: .*/version: ${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}/" pubspec.yaml
-          echo "Updated pubspec.yaml:"
-          grep '^version:' pubspec.yaml
+          # Replace only the FIRST occurrence of a 'version:' line that contains
+          # a valid X.Y.Z+N pattern. Leaves any stray duplicate lines alone but
+          # prints them as a warning.
+          NEW_VERSION="${{ steps.bump.outputs.new_version }}"
+          NEW_BUILD="${{ steps.bump.outputs.new_build }}"
+          # Match only lines like:  version: 1.1.0+2
+          # (with optional leading whitespace and any trailing comment after #)
+          sed -i -E "0,/^version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+/ s|^version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+.*|version: ${NEW_VERSION}+${NEW_BUILD}|" pubspec.yaml
+          echo "Updated pubspec.yaml (first matching line):"
+          grep -m 1 -E '^version:[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+' pubspec.yaml
+          # Sanity-check: warn if there's more than one version line
+          MATCHES=$(grep -c -E '^version:' pubspec.yaml || echo 0)
+          if [ "$MATCHES" -gt 1 ]; then
+            echo "::warning::Found $MATCHES 'version:' lines in pubspec.yaml. Only the first was updated."
+            grep -n -E '^version:' pubspec.yaml
+          fi
 
       - name: Flutter doctor
         run: flutter doctor -v
@@ -137,16 +185,16 @@ jobs:
           mkdir -p artifact
           echo "${{ steps.bump.outputs.new_version }}" > artifact/version.txt
           echo "${{ steps.bump.outputs.new_build }}" > artifact/build_number.txt
-          cat > artifact/build_info.txt <<EOF
-          App: loan_tracker
-          Version: ${{ steps.bump.outputs.new_version }}
-          Build Number: ${{ steps.bump.outputs.new_build }}
-          Build Type: ${{ github.event.inputs.build_type }}
-          Built At: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          GitHub Run: ${{ github.run_number }}
-          Commit: ${{ github.sha }}
-          Workflow: ${{ github.workflow }}
-          EOF
+          {
+            echo "App: loan_tracker"
+            echo "Version: ${{ steps.bump.outputs.new_version }}"
+            echo "Build Number: ${{ steps.bump.outputs.new_build }}"
+            echo "Build Type: ${{ github.event.inputs.build_type }}"
+            echo "Built At: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "GitHub Run: ${{ github.run_number }}"
+            echo "Commit: ${{ github.sha }}"
+            echo "Workflow: ${{ github.workflow }}"
+          } > artifact/build_info.txt
           cp "${{ steps.apk.outputs.apk_path }}" "artifact/loan_tracker-${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}-${{ github.event.inputs.build_type }}.apk"
 
       - name: Upload APK artifact
@@ -162,5 +210,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pubspec.yaml
-          git commit -m "chore(release): v${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}" || echo "No changes to commit"
-          git push || echo "Push skipped (likely no changes)"
+          if git diff --staged --quiet; then
+            echo "No pubspec changes to commit (version unchanged)."
+          else
+            git commit -m "chore(release): v${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}
+
+          Auto-bumped by GitHub Actions run #${{ github.run_number }}.
+          Build type: ${{ github.event.inputs.build_type }}"
+            git push
+            echo "Pushed v${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}"
+          fi

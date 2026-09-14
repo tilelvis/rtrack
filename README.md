@@ -77,20 +77,36 @@ loan_tracker/
 
 ## Versioning
 
-The app uses **both** semantic version and build number, in the form `MAJOR.MINOR.PATCH+BUILD` (e.g. `1.0.0+1`).
+The app uses **both** semantic version and build number, in the form `MAJOR.MINOR.PATCH+BUILD` (e.g. `1.1.0+2`).
 
 - `version` field in `pubspec.yaml` is the single source of truth.
 - `versionCode` (Android integer) = build number.
 - `versionName` (Android string) = semantic version.
 
-On every GitHub Actions run, the workflow:
-1. Reads current `version: X.Y.Z+N` from `pubspec.yaml`.
-2. Accepts optional `version` and `build_number` inputs.
-3. If inputs are empty, keeps current version and auto-increments build number.
-4. Validates the semantic version regex `^[0-9]+\.[0-9]+\.[0-9]+$`.
-5. Updates `pubspec.yaml` with the new `version` line.
+### Auto-versioning (default behaviour)
+
+When you trigger the **Build APK** workflow without filling in the optional `version` or `build_number` inputs, the workflow **auto-bumps** both:
+
+| Field | Default action |
+| --- | --- |
+| Semantic version | Patch component +1 (e.g. `1.1.0` → `1.1.1`, `2.3.7` → `2.3.8`) |
+| Build number | +1 (e.g. `2` → `3`) |
+
+So each manual dispatch produces a strictly higher version than the previous run. The previous values are read from the **first** `version: X.Y.Z+N` line in `pubspec.yaml` (robust against duplicate lines).
+
+### Manual override
+
+If you want to jump to a specific version (e.g. `2.0.0` for a breaking change, or `1.2.0` for a minor feature), fill in the `version` input. You can override just the version, just the build number, or both.
+
+### Workflow steps
+
+1. Reads the current `version: X.Y.Z+N` from `pubspec.yaml` (first matching line only, validated against a strict regex).
+2. Computes new version: input value if provided, else patch+1.
+3. Computes new build: input value if provided, else current+1.
+4. Validates both (regex `^[0-9]+\.[0-9]+\.[0-9]+$` for version, `^[0-9]+$` for build).
+5. Updates the **first** `version:` line in `pubspec.yaml` (leaves any stray duplicates alone but warns).
 6. Builds the APK with `--build-name` and `--build-number` flags.
-7. Commits the bumped `pubspec.yaml` back to the repo.
+7. Commits the bumped `pubspec.yaml` back to the repo with a `chore(release): vX.Y.Z+N` message.
 
 ## Building the APK
 
