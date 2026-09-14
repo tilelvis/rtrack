@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon for Android 8.0+ (API 26+).
+  Foreground: neon-green "L" with cyan underline (uses ic_launcher.png).
+  Background: deep near-black solid color matching the brand.
+  Both layers are 108dp x 108dp with 72dp safe-zone; the launcher crops to shape.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
