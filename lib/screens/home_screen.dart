@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
+import '../services/pdf_report_service.dart';
 import '../theme/theme.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/payment_history_list.dart';
+import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
 import 'mpesa_paste_screen.dart';
 import 'settings_screen.dart';
@@ -61,6 +63,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'Download PDF report',
+            onPressed: hasLoan ? () => _exportPdf(provider) : null,
+          ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () => Navigator.push(
@@ -159,11 +166,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-      children: const [
-        DashboardCard(),
-        SizedBox(height: 16),
-        PaymentHistoryList(limit: 5, embedded: true),
+      children: [
+        const DashboardCard(),
+        const SizedBox(height: 16),
+        TransactionsTable(limit: 8),
+        const SizedBox(height: 16),
+        const PaymentHistoryList(limit: 3, embedded: true),
       ],
     );
+  }
+
+  Future<void> _exportPdf(LoanProvider provider) async {
+    final loan = provider.activeLoan;
+    if (loan == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Show generating indicator
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Generating PDF report...'),
+          ],
+        ),
+        duration: Duration(seconds: 10),
+      ),
+    );
+
+    try {
+      await PdfReportService.generateAndShare(
+        loan: loan,
+        payments: provider.recentPayments,
+        totalPaid: provider.totalPaid,
+      );
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('PDF report ready — share or save it.'),
+          backgroundColor: AppTheme.primary,
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate PDF: $e'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    }
   }
 }

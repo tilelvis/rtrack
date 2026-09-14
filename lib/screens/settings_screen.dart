@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
 import '../services/notification_service.dart';
+import '../services/pdf_report_service.dart';
 import '../theme/theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -128,6 +129,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 24),
+        _section('Export & Reports'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'PDF Report',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Generate a printable PDF with all transactions, M-Pesa codes, '
+                  'amounts, dates, and totals for the active loan.',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: provider.activeLoan == null
+                        ? null
+                        : () => _exportPdf(provider),
+                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    label: const Text('Generate PDF Report'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
         _section('Loan'),
         if (provider.activeLoan != null)
           Card(
@@ -208,7 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Version 1.0.0 • Build 1',
+                  'Version 1.1.0 • Build 2',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
@@ -224,6 +258,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _exportPdf(LoanProvider provider) async {
+    final loan = provider.activeLoan;
+    if (loan == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Generating PDF report...'),
+          ],
+        ),
+        duration: Duration(seconds: 10),
+      ),
+    );
+
+    try {
+      await PdfReportService.generateAndShare(
+        loan: loan,
+        payments: provider.recentPayments,
+        totalPaid: provider.totalPaid,
+      );
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('PDF report ready — share or save it.'),
+          backgroundColor: AppTheme.primary,
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate PDF: $e'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    }
   }
 
   Widget _section(String title) {
