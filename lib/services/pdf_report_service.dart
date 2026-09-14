@@ -64,7 +64,7 @@ class PdfReportService {
 
     final balance = loan.totalPayable - totalPaid;
     final progress = loan.totalPayable > 0
-        ? (totalPaid / loan.totalPayable).clamp(0, 1)
+        ? (totalPaid / loan.totalPayable).clamp(0.0, 1.0).toDouble()
         : 0.0;
 
     // Color palette (match app's dark-neon identity, but on a white PDF)
@@ -219,7 +219,7 @@ class PdfReportService {
             ],
           ),
           pw.SizedBox(height: 8),
-          _progressBar(progress, neonGreen, lineColor, baseFont, mutedText),
+          _progressBar(progress, neonGreen, lineColor),
           pw.SizedBox(height: 24),
 
           // --- Section heading ---
@@ -271,6 +271,8 @@ class PdfReportService {
     PdfColor mutedText,
     PdfColor lineColor,
   ) {
+    // baseFont + darkText reserved for future sub-line; suppress unused warnings.
+    final _ = (baseFont, darkText);
     return pw.Expanded(
       child: pw.Container(
         padding: const pw.EdgeInsets.all(10),
@@ -309,9 +311,14 @@ class PdfReportService {
     double progress,
     PdfColor fillColor,
     PdfColor trackColor,
-    pw.Font baseFont,
-    PdfColor mutedText,
   ) {
+    // pdf package does not ship FractionallySizedBox, so we emulate the
+    // progress bar using an Expanded-based Row with proportional flex.
+    // progress is clamped to [0, 1] and converted to integer flex parts.
+    final p = progress.clamp(0.0, 1.0);
+    final filledFlex = (p * 1000).round();
+    final emptyFlex = 1000 - filledFlex;
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -322,12 +329,18 @@ class PdfReportService {
             width: double.infinity,
             height: 8,
             decoration: pw.BoxDecoration(color: trackColor),
-            child: pw.Stack(
+            child: pw.Row(
               children: [
-                pw.FractionallySizedBox(
-                  widthFactor: progress,
-                  child: pw.Container(color: fillColor),
-                ),
+                if (filledFlex > 0)
+                  pw.Expanded(
+                    flex: filledFlex,
+                    child: pw.Container(color: fillColor),
+                  ),
+                if (emptyFlex > 0)
+                  pw.Expanded(
+                    flex: emptyFlex,
+                    child: pw.Container(color: trackColor),
+                  ),
               ],
             ),
           ),
@@ -439,7 +452,9 @@ class PdfReportService {
             ],
           );
         }),
-        // Total row
+        // Total row — pdf package requires every TableRow to have one child
+        // per column, so we emit 5 cells (the first holds the "TOTAL" label,
+        // the next 3 are empty spacers, the last holds the summed amount).
         pw.TableRow(
           decoration: pw.BoxDecoration(
             color: const PdfColor.fromInt(0xFFE8F8E0),
@@ -452,8 +467,10 @@ class PdfReportService {
               mutedText,
               fontSize: 10,
               isBold: true,
-              colspan: 4,
             ),
+            _cell('', baseFont, mutedText, mutedText),
+            _cell('', baseFont, mutedText, mutedText),
+            _cell('', baseFont, mutedText, mutedText),
             _cell(
               payments.fold<double>(0, (s, p) => s + p.amount).toStringAsFixed(2),
               baseFont,
@@ -499,14 +516,16 @@ class PdfReportService {
     double fontSize = 10,
     pw.TextAlign align = pw.TextAlign.left,
     bool isBold = false,
-    int colspan = 1,
   }) {
+    // mutedColor is accepted for API symmetry but not used in the cell body;
+    // primaryColor already conveys the visual emphasis.
+    final _ = mutedColor;
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: pw.Text(
         text,
         style: pw.TextStyle(
-          font: isBold ? baseFont : baseFont,
+          font: baseFont,
           fontSize: fontSize,
           color: primaryColor,
           fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,

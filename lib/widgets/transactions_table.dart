@@ -180,7 +180,9 @@ class TransactionsTable extends StatelessWidget {
     );
   }
 
-  Widget _row(Payment p, LoanProvider provider) {
+  TableRow _row(Payment p, LoanProvider provider) {
+    // provider is reserved for future tap-to-edit expansion; suppress unused warning.
+    final _ = provider;
     final isMpesa = p.source == PaymentSource.mpesa;
     final typeColor = isMpesa ? AppTheme.primary : AppTheme.accent;
     return TableRow(
