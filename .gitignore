@@ -1,0 +1,34 @@
+# Build artifacts
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+ios/Pods/
+Podfile.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Flutter / Dart generated
+.dart_tool/
+*.g.dart
+*.freezed.dart
+**/generated_plugin_registrant.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config
+.env
+local.properties
+key.properties
+*.keystore
+*.jks

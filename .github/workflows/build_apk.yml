@@ -1,0 +1,153 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semantic version (e.g. 1.2.0). Leave empty to keep current.'
+        required: false
+        default: ''
+      build_number:
+        description: 'Build number (integer). Leave empty to auto-increment.'
+        required: false
+        default: ''
+      build_type:
+        description: 'Build type'
+        required: true
+        type: choice
+        default: 'debug'
+        options:
+          - debug
+          - release
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Read current version from pubspec
+        id: current_version
+        run: |
+          CURRENT=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)
+          CURRENT_BUILD=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 2)
+          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "current_build=$CURRENT_BUILD" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT+$CURRENT_BUILD"
+
+      - name: Compute new version & build number
+        id: bump
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            NEW_VERSION="${{ github.event.inputs.version }}"
+          else
+            NEW_VERSION="${{ steps.current_version.outputs.current_version }}"
+          fi
+
+          if [ -n "${{ github.event.inputs.build_number }}" ]; then
+            NEW_BUILD="${{ github.event.inputs.build_number }}"
+          else
+            BASE="${{ steps.current_version.outputs.current_build }}"
+            NEW_BUILD=$((BASE + 1))
+          fi
+
+          if ! echo "$NEW_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid semantic version '$NEW_VERSION'. Expected format like 1.0.0"
+            exit 1
+          fi
+
+          if ! echo "$NEW_BUILD" | grep -Eq '^[0-9]+$'; then
+            echo "::error::Invalid build number '$NEW_BUILD'. Must be integer."
+            exit 1
+          fi
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_build=$NEW_BUILD" >> $GITHUB_OUTPUT
+          echo "Bumping to: $NEW_VERSION+$NEW_BUILD"
+
+      - name: Update pubspec.yaml version
+        run: |
+          sed -i "s/^version: .*/version: ${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}/" pubspec.yaml
+          echo "Updated pubspec.yaml:"
+          grep '^version:' pubspec.yaml
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify analysis
+        run: flutter analyze || true
+
+      - name: Build APK
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+            flutter build apk --release --build-name=${{ steps.bump.outputs.new_version }} --build-number=${{ steps.bump.outputs.new_build }}
+          else
+            flutter build apk --debug --build-name=${{ steps.bump.outputs.new_version }} --build-number=${{ steps.bump.outputs.new_build }}
+          fi
+
+      - name: Locate APK
+        id: apk
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
+            APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          else
+            APK_PATH="build/app/outputs/flutter-apk/app-debug.apk"
+          fi
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          ls -lh "$APK_PATH"
+
+      - name: Write version metadata
+        run: |
+          mkdir -p artifact
+          echo "${{ steps.bump.outputs.new_version }}" > artifact/version.txt
+          echo "${{ steps.bump.outputs.new_build }}" > artifact/build_number.txt
+          cat > artifact/build_info.txt <<EOF
+          App: loan_tracker
+          Version: ${{ steps.bump.outputs.new_version }}
+          Build Number: ${{ steps.bump.outputs.new_build }}
+          Build Type: ${{ github.event.inputs.build_type }}
+          Built At: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          GitHub Run: ${{ github.run_number }}
+          Commit: ${{ github.sha }}
+          Workflow: ${{ github.workflow }}
+          EOF
+          cp "${{ steps.apk.outputs.apk_path }}" "artifact/loan_tracker-${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}-${{ github.event.inputs.build_type }}.apk"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: loan_tracker-${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}-${{ github.event.inputs.build_type }}
+          path: artifact/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "chore(release): v${{ steps.bump.outputs.new_version }}+${{ steps.bump.outputs.new_build }}" || echo "No changes to commit"
+          git push || echo "Push skipped (likely no changes)"
