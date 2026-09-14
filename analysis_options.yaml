@@ -1,4 +1,4 @@
-include: package:flutter_lints/flutter.yml
+include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
@@ -11,3 +11,7 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+  errors:
+    invalid_constant: error
+    missing_required_argument: error
+    undefined_method: error

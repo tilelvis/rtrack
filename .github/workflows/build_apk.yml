@@ -97,6 +97,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Ensure local.properties exists
+        run: |
+          # flutter pub get usually writes this, but we add a safety net
+          # for cases where CI cache restores an older copy.
+          if [ ! -f android/local.properties ] || ! grep -q "^flutter.sdk=" android/local.properties; then
+            echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+            echo "flutter.buildMode=debug" >> android/local.properties
+            echo "Wrote android/local.properties with flutter.sdk=$FLUTTER_ROOT"
+          else
+            echo "android/local.properties already populated:"
+            cat android/local.properties
+          fi
+
       - name: Verify analysis
         run: flutter analyze || true
 

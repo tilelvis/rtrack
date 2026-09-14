@@ -61,13 +61,13 @@ class AppTheme {
           letterSpacing: -0.5,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: _surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: _border, width: 1),
+          side: const BorderSide(color: _border, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -130,16 +130,16 @@ class AppTheme {
     );
   }
 
-  static Color get bg => _bg;
-  static Color get surface => _surface;
-  static Color get surfaceAlt => _surfaceAlt;
-  static Color get primary => _primary;
-  static Color get primaryDim => _primaryDim;
-  static Color get accent => _accent;
-  static Color get magenta => _magenta;
-  static Color get warning => _warning;
-  static Color get danger => _danger;
-  static Color get textPrimary => _textPrimary;
-  static Color get textSecondary => _textSecondary;
-  static Color get border => _border;
+  static const Color bg = _bg;
+  static const Color surface = _surface;
+  static const Color surfaceAlt = _surfaceAlt;
+  static const Color primary = _primary;
+  static const Color primaryDim = _primaryDim;
+  static const Color accent = _accent;
+  static const Color magenta = _magenta;
+  static const Color warning = _warning;
+  static const Color danger = _danger;
+  static const Color textPrimary = _textPrimary;
+  static const Color textSecondary = _textSecondary;
+  static const Color border = _border;
 }

@@ -1,4 +1,4 @@
-// Top-level Android build file.
+// Default Flutter Android settings.gradle (Groovy DSL) for Flutter 3.16+.
 pluginManagement {
     def flutterSdkPath = {
         def properties = new Properties()
@@ -7,7 +7,10 @@ pluginManagement {
         assert flutterSdkPath != null, "flutter.sdk not set in local.properties"
         return flutterSdkPath
     }
-    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+    settings.ext.flutterSdkPath = flutterSdkPath()
+
+    includeBuild("$settings.ext.flutterSdkPath/packages/flutter_tools/gradle")
+
     repositories {
         google()
         mavenCentral()
