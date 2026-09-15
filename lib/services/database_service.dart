@@ -19,8 +19,9 @@ class DatabaseService {
     final path = p.join(dbPath, 'loan_tracker.db');
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
     return _db!;
   }
@@ -37,7 +38,11 @@ class DatabaseService {
         expected_per_interval REAL NOT NULL,
         interval TEXT NOT NULL,
         custom_interval_days INTEGER NOT NULL DEFAULT 7,
-        notes TEXT
+        notes TEXT,
+        keyword TEXT,
+        lender_name TEXT,
+        lender_phone TEXT,
+        lender_email TEXT
       )
     ''');
 
@@ -65,6 +70,29 @@ class DatabaseService {
     );
   }
 
+  /// Handle schema upgrades.
+  /// v1 -> v2: add `keyword` column to loans (SMS auto-import filter)
+  /// v2 -> v3: add `lender_name`, `lender_phone`, `lender_email` columns
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    final cols = await db.rawQuery('PRAGMA table_info(loans)');
+    final colNames = cols.map((c) => c['name'] as String).toSet();
+
+    if (oldVersion < 2 && !colNames.contains('keyword')) {
+      await db.execute('ALTER TABLE loans ADD COLUMN keyword TEXT');
+    }
+    if (oldVersion < 3) {
+      if (!colNames.contains('lender_name')) {
+        await db.execute('ALTER TABLE loans ADD COLUMN lender_name TEXT');
+      }
+      if (!colNames.contains('lender_phone')) {
+        await db.execute('ALTER TABLE loans ADD COLUMN lender_phone TEXT');
+      }
+      if (!colNames.contains('lender_email')) {
+        await db.execute('ALTER TABLE loans ADD COLUMN lender_email TEXT');
+      }
+    }
+  }
+
   // ---- Loan CRUD ----
   Future<String> insertLoan(Loan loan) async {
     final db = await database;
@@ -80,6 +108,10 @@ class DatabaseService {
       interval: loan.interval,
       customIntervalDays: loan.customIntervalDays,
       notes: loan.notes,
+      keyword: loan.keyword,
+      lenderName: loan.lenderName,
+      lenderPhone: loan.lenderPhone,
+      lenderEmail: loan.lenderEmail,
     );
     await db.insert('loans', toSave.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);

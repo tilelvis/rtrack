@@ -5,9 +5,11 @@ import '../services/pdf_report_service.dart';
 import '../theme/theme.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/payment_history_list.dart';
+import '../widgets/payment_trend_chart.dart';
 import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
 import 'mpesa_paste_screen.dart';
+import 'sms_scan_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -67,6 +69,17 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Download PDF report',
             onPressed: hasLoan ? () => _exportPdf(provider) : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.sms_search_outlined),
+            tooltip: 'Scan SMS for M-Pesa payments',
+            onPressed: hasLoan
+                ? () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const SmsScanScreen()),
+                    )
+                : null,
           ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -168,6 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
         const DashboardCard(),
+        const SizedBox(height: 16),
+        PaymentTrendChart(
+          payments: provider.recentPayments,
+          expectedPerWeek: provider.activeLoan!.expectedPerInterval,
+          weeks: 6,
+        ),
         const SizedBox(height: 16),
         TransactionsTable(limit: 8),
         const SizedBox(height: 16),

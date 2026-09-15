@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../providers/loan_provider.dart';
 import '../services/mpesa_parser.dart';
 import '../theme/theme.dart';
+import 'lender_actions_sheet.dart';
 
 /// Main dashboard card — shows progress ring, balance, days remaining, today status.
 class DashboardCard extends StatelessWidget {
@@ -93,6 +94,65 @@ class DashboardCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _todayStatus(todayPaid, loan.expectedPerInterval),
+            if (loan.hasLenderContact) ...[
+              const SizedBox(height: 12),
+              _lenderChip(context, loan.lenderName ?? 'Lender'),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _lenderChip(BuildContext context, String name) {
+    return InkWell(
+      onTap: () {
+        final provider = context.read<LoanProvider>();
+        final loan = provider.activeLoan;
+        if (loan != null) {
+          showLenderActionsSheet(context, loan);
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.accent.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.person, color: AppTheme.accent, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'LENDER',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: AppTheme.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppTheme.accent, size: 20),
           ],
         ),
       ),

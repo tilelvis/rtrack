@@ -10,6 +10,11 @@ class Loan {
   final PaymentInterval interval; // weekly or custom days
   final int customIntervalDays; // when interval == custom
   final String? notes;
+  final String? keyword; // SMS auto-import filter (e.g. "JOHN DOE" or phone)
+  // Lender contact (for tap-to-call / WhatsApp / email statements)
+  final String? lenderName;
+  final String? lenderPhone; // E.164 or local, e.g. +254712345678 or 0712345678
+  final String? lenderEmail;
 
   Loan({
     required this.id,
@@ -22,6 +27,10 @@ class Loan {
     required this.interval,
     this.customIntervalDays = 7,
     this.notes,
+    this.keyword,
+    this.lenderName,
+    this.lenderPhone,
+    this.lenderEmail,
   });
 
   double get totalPayable {
@@ -46,6 +55,27 @@ class Loan {
     }
   }
 
+  /// Normalise phone to international format (no leading +, no spaces).
+  /// Assumes Kenyan numbers if no country code is present.
+  /// "0712345678" -> "254712345678"
+  /// "+254712345678" -> "254712345678"
+  String? get lenderPhoneNormalized {
+    final raw = lenderPhone;
+    if (raw == null || raw.trim().isEmpty) return null;
+    var s = raw.replaceAll(RegExp(r'[\s\-()]'), '');
+    if (s.startsWith('+')) s = s.substring(1);
+    if (s.startsWith('00')) s = s.substring(2);
+    // Kenyan local -> international
+    if (s.startsWith('07') || s.startsWith('01')) s = '254${s.substring(1)}';
+    return s;
+  }
+
+  /// True if any lender contact info is set.
+  bool get hasLenderContact =>
+      (lenderName?.isNotEmpty ?? false) ||
+      (lenderPhone?.isNotEmpty ?? false) ||
+      (lenderEmail?.isNotEmpty ?? false);
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -58,6 +88,10 @@ class Loan {
       'interval': interval.name,
       'custom_interval_days': customIntervalDays,
       'notes': notes,
+      'keyword': keyword,
+      'lender_name': lenderName,
+      'lender_phone': lenderPhone,
+      'lender_email': lenderEmail,
     };
   }
 
@@ -74,6 +108,10 @@ class Loan {
           .byName(m['interval'] as String? ?? 'weekly'),
       customIntervalDays: (m['custom_interval_days'] as num? ?? 7).toInt(),
       notes: m['notes'] as String?,
+      keyword: m['keyword'] as String?,
+      lenderName: m['lender_name'] as String?,
+      lenderPhone: m['lender_phone'] as String?,
+      lenderEmail: m['lender_email'] as String?,
     );
   }
 }

@@ -50,11 +50,71 @@ class PdfReportService {
     return filePath;
   }
 
+  /// Generate and share a MONTHLY statement PDF for the given loan + month.
+  /// Filters payments to only those in the specified [year]/[month].
+  /// Returns the path to the saved PDF file.
+  static Future<String> generateMonthlyAndShare({
+    required Loan loan,
+    required List<Payment> allPayments,
+    required double totalPaidAllTime,
+    required int year,
+    required int month,
+  }) async {
+    // Filter payments to the specified month
+    final monthly = allPayments.where((p) =>
+        p.paidAt.year == year && p.paidAt.month == month).toList();
+    final monthlyTotal = monthly.fold<double>(
+      0, (s, p) => s + p.amount);
+
+    final pdf = await _buildDocument(
+      loan: loan,
+      payments: monthly,
+      totalPaid: monthlyTotal,
+      isMonthlyStatement: true,
+      statementYear: year,
+      statementMonth: month,
+      allTimeTotalPaid: totalPaidAllTime,
+    );
+
+    final bytes = await pdf.save();
+    final tmpDir = await getTemporaryDirectory();
+    final monthName = DateFormat('MMMM').format(DateTime(year, month));
+    final fileName =
+        'statement_${loan.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}'
+        '_${monthName}_${year}.pdf';
+    final filePath = p.join(tmpDir.path, fileName);
+    await File(filePath).writeAsBytes(bytes);
+
+    final lenderEmail = loan.lenderEmail?.trim() ?? '';
+    final shareText = StringBuffer()
+      ..writeln('Monthly statement — ${loan.title}')
+      ..writeln('Period: $monthName $year')
+      ..writeln('Payments this month: ${monthly.length}')
+      ..writeln('Total this month: Ksh ${monthlyTotal.toStringAsFixed(2)}')
+      ..writeln('All-time total paid: Ksh ${totalPaidAllTime.toStringAsFixed(2)}')
+      ..writeln('Remaining balance: Ksh ${(loan.totalPayable - totalPaidAllTime).clamp(0, double.infinity).toStringAsFixed(2)}');
+    if (lenderEmail.isNotEmpty) {
+      shareText.writeln('Lender: ${loan.lenderName ?? "—"} <$lenderEmail>');
+    }
+
+    await Share.shareXFiles(
+      [XFile(filePath)],
+      subject: 'Monthly statement — $monthName $year (${loan.title})',
+      text: shareText.toString(),
+    );
+
+    return filePath;
+  }
+
   /// Build the PDF document.
   static Future<pw.Document> _buildDocument({
     required Loan loan,
     required List<Payment> payments,
     required double totalPaid,
+    bool isMonthlyStatement = false,
+    int? statementYear,
+    int? statementMonth,
+    double? allTimeTotalPaid,
   }) async {
     final doc = pw.Document(pageMode: PdfPageMode.fullscreen);
 
@@ -65,6 +125,17 @@ class PdfReportService {
     final balance = loan.totalPayable - totalPaid;
     final progress = loan.totalPayable > 0
         ? (totalPaid / loan.totalPayable).clamp(0.0, 1.0).toDouble()
+        : 0.0;
+
+    // For monthly statements, the balance shown is computed from all-time
+    // totals, not just this month's payments.
+    final effectiveBalance = isMonthlyStatement && allTimeTotalPaid != null
+        ? (loan.totalPayable - allTimeTotalPaid).clamp(0.0, double.infinity)
+        : balance;
+    final effectiveProgress = loan.totalPayable > 0
+        ? ((allTimeTotalPaid ?? totalPaid) / loan.totalPayable)
+            .clamp(0.0, 1.0)
+            .toDouble()
         : 0.0;
 
     // Color palette (match app's dark-neon identity, but on a white PDF)
@@ -78,6 +149,12 @@ class PdfReportService {
     // Load a default font; pdf package ships with Helvetica by default
     final baseFont = pw.Font.helvetica();
     final boldFont = pw.Font.helveticaBold();
+
+    final statementPeriodLabel = (isMonthlyStatement &&
+            statementYear != null &&
+            statementMonth != null)
+        ? '${DateFormat('MMMM y').format(DateTime(statementYear, statementMonth))} Statement'
+        : 'Repayment Report';
 
     doc.addPage(
       pw.MultiPage(
@@ -100,7 +177,7 @@ class PdfReportService {
                 ),
                 pw.SizedBox(height: 2),
                 pw.Text(
-                  'Repayment Report',
+                  statementPeriodLabel,
                   style: pw.TextStyle(
                     font: baseFont,
                     fontSize: 10,
@@ -185,7 +262,7 @@ class PdfReportService {
               ),
               pw.SizedBox(width: 8),
               _summaryCard(
-                'Total Paid',
+                isMonthlyStatement ? 'Paid this month' : 'Total Paid',
                 'Ksh ${_fmt(totalPaid)}',
                 neonGreen,
                 baseFont,
@@ -197,7 +274,7 @@ class PdfReportService {
               pw.SizedBox(width: 8),
               _summaryCard(
                 'Balance',
-                'Ksh ${_fmt(balance < 0 ? 0 : balance)}',
+                'Ksh ${_fmt(effectiveBalance < 0 ? 0 : effectiveBalance)}',
                 const PdfColor.fromInt(0xFFFF3B3B),
                 baseFont,
                 boldFont,
@@ -208,7 +285,7 @@ class PdfReportService {
               pw.SizedBox(width: 8),
               _summaryCard(
                 'Progress',
-                '${(progress * 100).toStringAsFixed(1)}%',
+                '${(effectiveProgress * 100).toStringAsFixed(1)}%',
                 accent,
                 baseFont,
                 boldFont,
@@ -219,7 +296,7 @@ class PdfReportService {
             ],
           ),
           pw.SizedBox(height: 8),
-          _progressBar(progress, neonGreen, lineColor),
+          _progressBar(effectiveProgress, neonGreen, lineColor),
           pw.SizedBox(height: 24),
 
           // --- Section heading ---

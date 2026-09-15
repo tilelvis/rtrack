@@ -18,6 +18,10 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
   final _interestCtrl = TextEditingController(text: '0');
   final _expectedCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _keywordCtrl = TextEditingController();
+  final _lenderNameCtrl = TextEditingController();
+  final _lenderPhoneCtrl = TextEditingController();
+  final _lenderEmailCtrl = TextEditingController();
 
   DateTime? _startDate = DateTime.now();
   DateTime? _dueDate = DateTime.now().add(const Duration(days: 30));
@@ -31,6 +35,10 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
     _interestCtrl.dispose();
     _expectedCtrl.dispose();
     _notesCtrl.dispose();
+    _keywordCtrl.dispose();
+    _lenderNameCtrl.dispose();
+    _lenderPhoneCtrl.dispose();
+    _lenderEmailCtrl.dispose();
     _customDaysCtrl.dispose();
     super.dispose();
   }
@@ -83,6 +91,16 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
       interval: _interval,
       customIntervalDays: int.parse(_customDaysCtrl.text),
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      keyword: _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim(),
+      lenderName: _lenderNameCtrl.text.trim().isEmpty
+          ? null
+          : _lenderNameCtrl.text.trim(),
+      lenderPhone: _lenderPhoneCtrl.text.trim().isEmpty
+          ? null
+          : _lenderPhoneCtrl.text.trim(),
+      lenderEmail: _lenderEmailCtrl.text.trim().isEmpty
+          ? null
+          : _lenderEmailCtrl.text.trim(),
     );
 
     await context.read<LoanProvider>().createLoan(loan);
@@ -180,6 +198,111 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Notes (optional)',
+              ),
+            ),
+            const SizedBox(height: 20),
+            // SMS keyword filter
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.sms_outlined, size: 18, color: AppTheme.accent),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'SMS Auto-Import Keyword',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'When you scan your SMS inbox, only M-Pesa messages containing this '
+                    'word will be matched to this loan. Use the lender\'s name (e.g. '
+                    '"JOHN DOE") or phone number. Leave empty to match all M-Pesa messages.',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _keywordCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Keyword (optional)',
+                      hintText: 'e.g. JOHN DOE or 0712345678',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Lender contact
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.contact_phone_outlined, size: 18, color: AppTheme.primary),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Lender Contact (optional)',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Save your lender\'s name, phone, and email. You can then '
+                    'tap to call, WhatsApp, SMS, or email them — and send '
+                    'payment receipts / monthly statements directly.',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _lenderNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Lender name',
+                      hintText: 'e.g. John Doe',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _lenderPhoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Lender phone',
+                      hintText: 'e.g. 0712345678 or +254712345678',
+                      prefixText: '+254 ',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _lenderEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Lender email (optional)',
+                      hintText: 'lender@example.com',
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),

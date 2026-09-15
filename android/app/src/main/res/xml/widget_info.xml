@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Metadata for the Loan Tracker home-screen widget.
+     - minWidth/minHeight: 2x1 cells (180x110 dp per Material guidelines)
+     - updatePeriodMillis: 30 min (Android minimum; we also push updates
+       from Flutter via SharedPreferences changes + an explicit broadcast)
+     - previewImage: shown in the widget picker
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_loan"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:previewImage="@mipmap/ic_launcher"
+    android:previewLayout="@layout/widget_loan" />

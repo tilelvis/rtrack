@@ -4,10 +4,13 @@ A personal loan repayment tracker for Android, built with **Flutter (Dart)** and
 
 ## Features
 
-- **Loan setup** — principal, interest rate, start/due dates, weekly or custom-day payment interval, expected amount per interval.
+- **Loan setup** — principal, interest rate, start/due dates, weekly or custom-day payment interval, expected amount per interval, optional SMS auto-import keyword.
 - **Dashboard** — progress ring, balance remaining, days left, "today paid?" status.
 - **Home transactions table** — compact table of recent payments (date, M-Pesa code, sender, amount, type badge) directly on the home screen.
+- **Payment trend chart** — line chart of the last 6 weeks of payments, with a dashed target line showing expected-per-week.
+- **Home-screen widget** — native Android widget (2×1) showing balance, progress %, due date, and amount per interval. Auto-updates when you open the app or log a payment. Tap to open the app.
 - **PDF report export** — generate a printable PDF report with loan summary, totals box, progress bar, and full transaction table (date, M-Pesa code, sender, type, amount). Share via the system share sheet (save to files, send via WhatsApp/email, print).
+- **M-Pesa SMS auto-import** — scan your SMS inbox for M-Pesa messages matching a per-loan keyword (lender name or phone number). Bulk-select and import detected payments. Already-imported messages are detected and greyed out.
 - **M-Pesa SMS paste** — paste a Safaricom M-Pesa confirmation SMS and auto-extract:
   - Amount (Ksh / KES)
   - M-Pesa transaction code (e.g. `SI7K2PX1HZ`)

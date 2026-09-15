@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/payment.dart';
 import '../providers/loan_provider.dart';
 import '../services/mpesa_parser.dart';
+import '../services/payment_receipt_service.dart';
 import '../theme/theme.dart';
 
 class PaymentHistoryList extends StatelessWidget {
@@ -161,33 +162,80 @@ class _PaymentTile extends StatelessWidget {
           ],
         ],
       ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
-        onPressed: () async {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: AppTheme.surface,
-              title: const Text('Delete payment?'),
-              content: Text(
-                'This will remove Ksh ${payment.amount.toStringAsFixed(2)} from your history.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: AppTheme.accent, size: 20),
+            tooltip: 'Share payment proof',
+            onPressed: () async {
+              final loan = provider.activeLoan;
+              if (loan == null) return;
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 12),
+                      Text('Generating receipt...'),
+                    ],
+                  ),
+                  duration: Duration(seconds: 10),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Delete', style: TextStyle(color: AppTheme.danger)),
+              );
+              try {
+                await PaymentReceiptService.generateAndShare(
+                  loan: loan,
+                  payment: payment,
+                  totalPaidAfter: provider.totalPaid,
+                );
+                messenger.hideCurrentSnackBar();
+              } catch (e) {
+                messenger.hideCurrentSnackBar();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Failed: $e'),
+                    backgroundColor: AppTheme.danger,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
+            tooltip: 'Delete payment',
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: AppTheme.surface,
+                  title: const Text('Delete payment?'),
+                  content: Text(
+                    'This will remove Ksh ${payment.amount.toStringAsFixed(2)} from your history.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Delete', style: TextStyle(color: AppTheme.danger)),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-          if (confirmed == true) {
-            await provider.deletePayment(payment.id);
-          }
-        },
+              );
+              if (confirmed == true) {
+                await provider.deletePayment(payment.id);
+              }
+            },
+          ),
+        ],
       ),
       isThreeLine: true,
     );

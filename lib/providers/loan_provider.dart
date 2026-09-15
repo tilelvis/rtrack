@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart';
 import '../models/loan.dart';
 import '../models/payment.dart';
 import '../services/database_service.dart';
+import '../services/widget_service.dart';
 
 class LoanProvider extends ChangeNotifier {
   final _db = DatabaseService();
+  final _widget = WidgetService();
 
   List<Loan> _loans = [];
   Loan? _activeLoan;
@@ -30,6 +32,7 @@ class LoanProvider extends ChangeNotifier {
     }
     _loading = false;
     notifyListeners();
+    _refreshWidget();
   }
 
   Future<void> setActiveLoan(String id) async {
@@ -42,6 +45,7 @@ class LoanProvider extends ChangeNotifier {
       _recentPayments = [];
     }
     notifyListeners();
+    _refreshWidget();
   }
 
   Future<String> createLoan(Loan loan) async {
@@ -64,6 +68,7 @@ class LoanProvider extends ChangeNotifier {
     } else {
       _recentPayments = await _db.getAllPayments();
       notifyListeners();
+      _refreshWidget();
     }
   }
 
@@ -97,5 +102,17 @@ class LoanProvider extends ChangeNotifier {
         p.paidAt.year == today.year &&
         p.paidAt.month == today.month &&
         p.paidAt.day == today.day);
+  }
+
+  /// Push loan summary to SharedPreferences for the native home-screen widget.
+  Future<void> _refreshWidget() async {
+    try {
+      await _widget.update(
+        loan: _activeLoan,
+        totalPaid: _totalPaid,
+      );
+    } catch (_) {
+      // Widget update failure should never crash the app.
+    }
   }
 }
