@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: hasLoan ? () => _exportPdf(provider) : null,
           ),
           IconButton(
-            icon: const Icon(Icons.sms_search_outlined),
+            icon: const Icon(Icons.sms_outlined),
             tooltip: 'Scan SMS for M-Pesa payments',
             onPressed: hasLoan
                 ? () => Navigator.push(

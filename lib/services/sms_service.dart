@@ -25,12 +25,12 @@ class DetectedPayment {
 /// Reads the device's SMS inbox for M-Pesa confirmation messages, filters
 /// them by a per-loan keyword, and parses each match into a [Payment].
 ///
-/// Example flow:
-///   1. User grants READ_SMS permission
-///   2. User taps "Scan SMS" on the home screen
-///   3. [scanForLoan] reads last N days of SMS, filters by loan.keyword
-///   4. UI shows the list of detected payments
-///   5. User confirms which to import
+/// Implementation note: telephony 0.2.0's `SmsFilter.where.contains(...)`
+/// chainable API is unreliable across versions (the `where` getter is
+/// typed as a `Function` and the chainable methods don't resolve cleanly).
+/// To stay version-agnostic, we pass `filter: null` (returns ALL inbox
+/// SMS) and apply our own filtering in Dart. This is fast enough for
+/// typical inbox sizes (hundreds to a few thousand messages).
 class SmsService {
   static final SmsService _instance = SmsService._internal();
   factory SmsService() => _instance;
@@ -75,39 +75,42 @@ class SmsService {
     final cutoff = DateTime.now().subtract(Duration(days: daysBack));
     final cutoffMillis = cutoff.millisecondsSinceEpoch;
 
-    // Build the SMS filter: must contain "M-Pesa" (case-insensitive),
-    // and either the keyword or any M-Pesa confirmation code pattern.
-    // telephony's SmsFilter supports .contains() which is case-insensitive
-    // on most Android implementations.
     final keyword = loan.keyword?.trim() ?? '';
-    final filter = keyword.isEmpty
-        ? SmsFilter.where.contains('M-Pesa')
-        : SmsFilter.where.contains('M-Pesa').or.contains(keyword);
 
-    final smsList = await _telephony.getInboxSms(
-      filter: filter,
-      sortOrder: [
-        OrderBy(SmsColumn.DATE, sort: Sort.by.desc),
-      ],
-    );
+    // Read ALL inbox SMS (filter: null = no filter). We sort in Dart below.
+    // This avoids the telephony 0.2.0 SmsFilter/Sort API mismatch.
+    final smsList = await _telephony.getInboxSms();
 
-    // Apply the date cutoff locally (telephony doesn't support date filter
-    // in SmsFilter directly on all versions).
+    // Filter + sort locally. We:
+    //   1. Keep only messages containing "M-Pesa" (case-insensitive)
+    //   2. Keep only messages within the daysBack window
+    //   3. Optionally filter by loan.keyword (case-insensitive)
+    //   4. Sort newest-first by date
     final filtered = smsList.where((s) {
-      final ts = int.tryParse(s.date ?? '0') ?? 0;
-      return ts >= cutoffMillis;
+      final body = s.body ?? '';
+      if (body.isEmpty) return false;
+      if (!body.toLowerCase().contains('m-pesa')) return false;
+
+      // Parse the date — telephony 0.2.0 exposes `date` as Object?, so
+      // stringify defensively before parsing.
+      final ts = _parseDateMillis(s.date);
+      if (ts < cutoffMillis) return false;
+
+      if (keyword.isNotEmpty &&
+          !body.toLowerCase().contains(keyword.toLowerCase())) {
+        return false;
+      }
+      return true;
     }).toList();
+
+    // Sort newest-first (highest timestamp first)
+    filtered.sort((a, b) =>
+        _parseDateMillis(b.date).compareTo(_parseDateMillis(a.date)));
 
     final results = <DetectedPayment>[];
     for (final sms in filtered) {
       final body = sms.body ?? '';
       if (body.isEmpty) continue;
-      // Re-check keyword match case-insensitively (Android SmsFilter is
-      // sometimes case-sensitive depending on ROM).
-      if (keyword.isNotEmpty &&
-          !body.toLowerCase().contains(keyword.toLowerCase())) {
-        continue;
-      }
       final parsed = MpesaParser.parse(body);
       if (!parsed.isValid) continue;
       final already = parsed.mpesaCode != null &&
@@ -126,12 +129,25 @@ class SmsService {
         ),
         rawSms: body,
         smsDate: DateTime.fromMillisecondsSinceEpoch(
-          int.tryParse(sms.date ?? '0') ?? 0,
+          _parseDateMillis(sms.date),
         ),
         alreadyImported: already,
       ));
     }
     return results;
+  }
+
+  /// Parse the `date` field of a [SmsMessage] into epoch milliseconds.
+  ///
+  /// telephony 0.2.0 exposes `SmsMessage.date` as `Object?` rather than
+  /// `String?` or `int?`. In practice the value is a numeric string
+  /// (epoch millis as text), but we handle all reasonable shapes here.
+  static int _parseDateMillis(dynamic date) {
+    if (date == null) return 0;
+    if (date is int) return date;
+    if (date is num) return date.toInt();
+    final s = date.toString();
+    return int.tryParse(s) ?? 0;
   }
 
   /// Batch-import a list of confirmed detected payments.

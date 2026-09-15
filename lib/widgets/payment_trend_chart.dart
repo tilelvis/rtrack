@@ -213,7 +213,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          tooltipBgColor: AppTheme.surfaceAlt,
+          getTooltipColor: (touchedSpot) => AppTheme.surfaceAlt,
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItems: (touchedSpots) {
