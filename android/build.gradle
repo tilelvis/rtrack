@@ -6,6 +6,20 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            if (project.name == "telephony" || project.android.namespace == null) {
+                project.android {
+                    if (namespace == null) {
+                        namespace "com.shounakmulay.telephony"
+                    }
+                }
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
