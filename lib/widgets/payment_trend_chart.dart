@@ -74,20 +74,21 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
                   : LineChart(_buildChart(weeklyData, maxY)),
             ),
             const SizedBox(height: 8),
-            // X-axis labels
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: weeklyData
-                  .map((d) => Expanded(
-                        child: Text(
-                          d.label,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 10,
-                          ),
+                  .map(
+                    (d) => Expanded(
+                      child: Text(
+                        d.label,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 10,
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -107,18 +108,26 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
         const SizedBox(width: 4),
         const Text(
           'Paid',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 10),
+          style: TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 10,
+          ),
         ),
         const SizedBox(width: 10),
         if (widget.expectedPerWeek > 0) ...[
           CustomPaint(
             size: const Size(10, 2),
-            painter: _DashedLinePainter(color: AppTheme.accent),
+            painter: _DashedLinePainter(
+              color: AppTheme.accent,
+            ),
           ),
           const SizedBox(width: 4),
           const Text(
             'Target',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 10),
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 10,
+            ),
           ),
         ],
       ],
@@ -138,25 +147,41 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
           const SizedBox(height: 8),
           const Text(
             'No payments to chart yet',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
     );
   }
 
-  LineChartData _buildChart(List<WeekData> data, double maxY) {
-    // Paid line spots
+  LineChartData _buildChart(
+    List<WeekData> data,
+    double maxY,
+  ) {
     final paidSpots = <FlSpot>[];
+
     for (var i = 0; i < data.length; i++) {
-      paidSpots.add(FlSpot(i.toDouble(), data[i].total));
+      paidSpots.add(
+        FlSpot(
+          i.toDouble(),
+          data[i].total,
+        ),
+      );
     }
 
-    // Target line spots (constant expected-per-week)
     final targetSpots = <FlSpot>[];
+
     if (widget.expectedPerWeek > 0) {
       for (var i = 0; i < data.length; i++) {
-        targetSpots.add(FlSpot(i.toDouble(), widget.expectedPerWeek));
+        targetSpots.add(
+          FlSpot(
+            i.toDouble(),
+            widget.expectedPerWeek,
+          ),
+        );
       }
     }
 
@@ -173,11 +198,12 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
       titlesData: const FlTitlesData(
         show: false,
       ),
-      borderData: FlBorderData(show: false),
+      borderData: FlBorderData(
+        show: false,
+      ),
       minY: 0,
       maxY: maxY,
       lineBarsData: [
-        // Target (dashed) line — drawn first so it sits behind
         if (targetSpots.isNotEmpty)
           LineChartBarData(
             spots: targetSpots,
@@ -185,10 +211,13 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
             color: AppTheme.accent,
             barWidth: 1.5,
             dashArray: [4, 4],
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(show: false),
+            dotData: const FlDotData(
+              show: false,
+            ),
+            belowBarData: BarAreaData(
+              show: false,
+            ),
           ),
-        // Actual paid line
         LineChartBarData(
           spots: paidSpots,
           isCurved: true,
@@ -197,7 +226,13 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
           barWidth: 2.5,
           dotData: FlDotData(
             show: true,
-            getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+            getDotPainter: (
+              spot,
+              percent,
+              barData,
+              index,
+            ) =>
+                FlDotCirclePainter(
               radius: 3.5,
               color: AppTheme.primary,
               strokeWidth: 2,
@@ -220,6 +255,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
             return touchedSpots.map((spot) {
               final idx = spot.spotIndex;
               final weekData = data[idx];
+
               return LineTooltipItem(
                 '${weekData.label}\nKsh ${spot.y.toStringAsFixed(0)}',
                 const TextStyle(
@@ -236,34 +272,73 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
   }
 
   /// Group payments by ISO week, returning last [weeks] weeks oldest-first.
-  List<WeekData> _aggregateByWeek(List<Payment> payments, int weeks) {
+  List<WeekData> _aggregateByWeek(
+    List<Payment> payments,
+    int weeks,
+  ) {
     final now = DateTime.now();
-    // Find the Monday of the current week
-    final monday = now.subtract(Duration(days: now.weekday - 1));
+
+    // Find the Monday of the current week.
+    final monday = now.subtract(
+      Duration(days: now.weekday - 1),
+    );
+
     final weeksList = <WeekData>[];
+
     for (var i = weeks - 1; i >= 0; i--) {
-      final weekStart = monday.subtract(Duration(days: 7 * i));
-      final weekEnd = weekStart.add(const Duration(days: 7));
+      final weekStart = monday.subtract(
+        Duration(days: 7 * i),
+      );
+
+      final weekEnd = weekStart.add(
+        const Duration(days: 7),
+      );
+
       final total = payments
-          .where((p) =>
-              !p.paidAt.isBefore(weekStart) && p.paidAt.isBefore(weekEnd))
-          .fold<double>(0, (s, p) => s + p.amount);
+          .where(
+            (p) =>
+                !p.paidAt.isBefore(weekStart) &&
+                p.paidAt.isBefore(weekEnd),
+          )
+          .fold<double>(
+            0,
+            (sum, payment) => sum + payment.amount,
+          );
+
       final label = i == 0
           ? 'This wk'
           : DateFormat('d/M').format(weekStart);
-      weeksList.add(WeekData(label: label, total: total));
+
+      weeksList.add(
+        WeekData(
+          label: label,
+          total: total,
+        ),
+      );
     }
+
     return weeksList;
   }
 
-  double _computeMaxY(List<WeekData> data, double expected) {
+  double _computeMaxY(
+    List<WeekData> data,
+    double expected,
+  ) {
     var maxPaid = 0.0;
+
     for (final d in data) {
-      if (d.total > maxPaid) maxPaid = d.total;
+      if (d.total > maxPaid) {
+        maxPaid = d.total;
+      }
     }
+
     var maxVal = maxPaid > expected ? maxPaid : expected;
-    // Round up to nearest 100 for nicer gridlines
-    if (maxVal <= 0) return 100;
+
+    // Round up to nearest 100 for nicer gridlines.
+    if (maxVal <= 0) {
+      return 100;
+    }
+
     final rounded = (maxVal / 100).ceil() * 100;
     return rounded.toDouble();
   }
@@ -272,33 +347,50 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
 class WeekData {
   final String label;
   final double total;
-  WeekData({required this.label, required this.total});
+
+  WeekData({
+    required this.label,
+    required this.total,
+  });
 }
 
 class _DashedLinePainter extends CustomPainter {
   final Color color;
-  _DashedLinePainter({required this.color});
+
+  _DashedLinePainter({
+    required this.color,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(
+    Canvas canvas,
+    Size size,
+  ) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
+
     const dashWidth = 3.0;
     const dashSpace = 2.0;
+
     var x = 0.0;
+
     while (x < size.width) {
       canvas.drawLine(
         Offset(x, 0),
         Offset(x + dashWidth, 0),
         paint,
       );
+
       x += dashWidth + dashSpace;
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(
+    covariant _DashedLinePainter oldDelegate,
+  ) {
+    return oldDelegate.color != color;
+  }
 }
