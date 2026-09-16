@@ -82,14 +82,22 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
       return;
     }
     var count = 0;
+    var skipped = 0;
     for (final d in toImport) {
-      await provider.addPayment(d.payment);
-      count++;
+      final saved = await provider.addPayment(d.payment);
+      if (saved) {
+        count++;
+      } else {
+        skipped++;
+      }
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Imported $count payment${count == 1 ? '' : 's'}'),
+          content: Text(
+            'Imported $count payment${count == 1 ? '' : 's'}'
+            '${skipped > 0 ? '; skipped $skipped already linked to another loan' : ''}',
+          ),
           backgroundColor: AppTheme.primary,
         ),
       );

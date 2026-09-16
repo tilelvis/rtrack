@@ -19,9 +19,12 @@ class DatabaseService {
     final path = p.join(dbPath, 'loan_tracker.db');
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
+      onOpen: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
     );
     return _db!;
   }
@@ -68,11 +71,16 @@ class DatabaseService {
     await db.execute(
       'CREATE INDEX idx_payments_paid_at ON payments(paid_at)',
     );
+    await db.execute(
+      'CREATE UNIQUE INDEX idx_payments_mpesa_code_unique '
+      'ON payments(mpesa_code) WHERE mpesa_code IS NOT NULL',
+    );
   }
 
   /// Handle schema upgrades.
   /// v1 -> v2: add `keyword` column to loans (SMS auto-import filter)
   /// v2 -> v3: add `lender_name`, `lender_phone`, `lender_email` columns
+  /// v3 -> v4: enforce M-Pesa transaction-code uniqueness.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     final cols = await db.rawQuery('PRAGMA table_info(loans)');
     final colNames = cols.map((c) => c['name'] as String).toSet();
@@ -90,6 +98,26 @@ class DatabaseService {
       if (!colNames.contains('lender_email')) {
         await db.execute('ALTER TABLE loans ADD COLUMN lender_email TEXT');
       }
+    }
+
+    if (oldVersion < 4) {
+      // Older releases did not enforce transaction-code uniqueness. Remove
+      // duplicate legacy rows deterministically before creating the unique
+      // partial index. NULL/manual payments remain unrestricted.
+      await db.execute('''
+        DELETE FROM payments
+        WHERE mpesa_code IS NOT NULL
+          AND rowid NOT IN (
+            SELECT MIN(rowid)
+            FROM payments
+            WHERE mpesa_code IS NOT NULL
+            GROUP BY mpesa_code
+          )
+      ''');
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_mpesa_code_unique '
+        'ON payments(mpesa_code) WHERE mpesa_code IS NOT NULL',
+      );
     }
   }
 
@@ -139,21 +167,44 @@ class DatabaseService {
   // ---- Payment CRUD ----
   Future<String> insertPayment(Payment payment) async {
     final db = await database;
+
+    // Make M-Pesa imports idempotent. The database unique index is the final
+    // guard; this lookup lets normal repeated imports become a no-op instead
+    // of surfacing a constraint exception to the user.
+    final code = payment.mpesaCode?.trim().toUpperCase();
+    if (code != null && code.isNotEmpty) {
+      final existing = await db.query(
+        'payments',
+        columns: ['id', 'loan_id'],
+        where: 'mpesa_code = ?',
+        whereArgs: [code],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        final existingLoanId = existing.first['loan_id'] as String;
+        if (existingLoanId != payment.loanId) {
+          throw StateError(
+            'M-Pesa transaction $code is already recorded for another loan.',
+          );
+        }
+        return existing.first['id'] as String;
+      }
+    }
+
     final id = payment.id.isEmpty ? _uuid.v4() : payment.id;
     final toSave = Payment(
       id: id,
       loanId: payment.loanId,
       amount: payment.amount,
       paidAt: payment.paidAt,
-      mpesaCode: payment.mpesaCode,
+      mpesaCode: code,
       phone: payment.phone,
       sender: payment.sender,
       rawMessage: payment.rawMessage,
       source: payment.source,
       notes: payment.notes,
     );
-    await db.insert('payments', toSave.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('payments', toSave.toMap());
     return id;
   }
 

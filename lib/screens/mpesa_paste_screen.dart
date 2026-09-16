@@ -60,19 +60,18 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
       rawMessage: p.rawMessage,
       source: PaymentSource.mpesa,
     );
-    await provider.addPayment(payment);
+    final saved = await provider.addPayment(payment);
+    if (!mounted) return;
     setState(() => _saving = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Payment saved: Ksh ${p.amount!.toStringAsFixed(2)}',
-          ),
-          backgroundColor: AppTheme.primary,
-        ),
-      );
-      Navigator.pop(context);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(saved
+            ? 'Payment saved: Ksh ${p.amount!.toStringAsFixed(2)}'
+            : 'This M-Pesa transaction is already recorded for another loan.'),
+        backgroundColor: saved ? AppTheme.primary : AppTheme.warning,
+      ),
+    );
+    if (saved) Navigator.pop(context);
   }
 
   @override

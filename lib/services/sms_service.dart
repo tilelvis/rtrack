@@ -120,7 +120,7 @@ class SmsService {
           id: '',
           loanId: loan.id,
           amount: parsed.amount!,
-          paidAt: parsed.paidAt ?? DateTime.now(),
+          paidAt: parsed.paidAt!,
           mpesaCode: parsed.mpesaCode,
           phone: parsed.phone,
           sender: parsed.sender,

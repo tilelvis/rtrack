@@ -61,8 +61,12 @@ class LoanProvider extends ChangeNotifier {
     await loadLoans();
   }
 
-  Future<void> addPayment(Payment payment) async {
-    await _db.insertPayment(payment);
+  Future<bool> addPayment(Payment payment) async {
+    try {
+      await _db.insertPayment(payment);
+    } on StateError {
+      return false;
+    }
     if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     } else {
@@ -70,6 +74,7 @@ class LoanProvider extends ChangeNotifier {
       notifyListeners();
       _refreshWidget();
     }
+    return true;
   }
 
   Future<void> deletePayment(String id) async {

@@ -66,10 +66,12 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.requestNotificationsPermission();
+    // exactAllowWhileIdle requires exact-alarm access on supported Android
+    // versions. The plugin opens the app-specific system settings screen.
+    await android?.requestExactAlarmsPermission();
   }
 
   /// Schedule a single daily reminder at [hour]:[minute] local time.
