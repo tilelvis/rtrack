@@ -43,8 +43,10 @@ android {
             // without needing a separate upload key. Replace with a real keystore
             // before publishing to Play Store.
             signingConfig = signingConfigs.getByName("debug")
-            minifyEnabled = false
-            shrinkResources = false
+            // Kotlin DSL uses the `is` prefix for boolean Gradle properties
+            // (Groovy silently translates, Kotlin is strict).
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
