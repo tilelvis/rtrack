@@ -1,28 +1,20 @@
-// Root Android build configuration.
-// Configure the legacy telephony plugin at plugin-application time rather than
-// using afterEvaluate, which is incompatible with current Gradle evaluation.
-rootProject.buildDir = "../build"
+// Top-level Android build file.
+// All plugin configuration is handled in settings.gradle via the
+// declarative plugins{} block (Flutter 3.16+ style).
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
-
 subprojects {
     project.evaluationDependsOn(":app")
-}
-
-// telephony 0.2.0 predates AGP's mandatory namespace declaration.
-// Configure its Android library extension as soon as the Android library plugin
-// is applied. This runs before Android variant configuration and avoids the
-// unsafe afterEvaluate hook that caused the previous CI failure.
-subprojects { project ->
-    project.pluginManager.withPlugin("com.android.library") {
-        if (project.name == "telephony") {
-            project.extensions.configure("android") {
-                namespace = "com.shounakmulay.telephony"
-            }
-        }
-    }
 }
 
 tasks.register("clean", Delete) {

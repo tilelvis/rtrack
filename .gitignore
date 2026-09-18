@@ -8,6 +8,8 @@ build/
 .pub/
 ios/Pods/
 Podfile.lock
+*.apk
+*.aab
 
 # IDE
 .idea/
@@ -17,18 +19,18 @@ Podfile.lock
 *.iws
 
 # Flutter / Dart generated
-.dart_tool/
-*.g.dart
-*.freezed.dart
 **/generated_plugin_registrant.dart
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Local config
+# Local config (NEVER commit these)
 .env
 local.properties
 key.properties
 *.keystore
 *.jks
+
+# Generated Android plugin registrant (committed by Flutter on build)
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
