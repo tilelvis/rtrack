@@ -20,6 +20,8 @@ Podfile.lock
 
 # Flutter / Dart generated
 **/generated_plugin_registrant.dart
+**/GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.kt
 
 # OS
 .DS_Store
@@ -32,5 +34,5 @@ key.properties
 *.keystore
 *.jks
 
-# Generated Android plugin registrant (committed by Flutter on build)
-android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+# Lock file — let CI regenerate fresh for the pinned Flutter version
+pubspec.lock

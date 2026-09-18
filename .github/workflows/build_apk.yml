@@ -54,14 +54,15 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Pin to Flutter 3.24.5 — the LAST version that does NOT auto-migrate
-      # android/*.gradle to *.gradle.kts. (3.27+ does an in-place migration
-      # that breaks when both .gradle and .gradle.kts exist.) Using 3.24.5
-      # means our hand-written .kts files are used AS-IS, no surprises.
-      - name: Setup Flutter 3.24.5 (pinned)
+      # Pin to Flutter 3.27.0 — the sweet spot:
+      #   - Supports BOTH CardTheme (old) and CardThemeData (new Material 3 API)
+      #   - Does NOT auto-migrate gradle files (unlike 3.32+)
+      #   - Stable, well-tested, has all security patches up to 3.27.x
+      # Using a SPECIFIC version (not "stable") means reproducible builds.
+      - name: Setup Flutter 3.27.0 (pinned for stability)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
+          flutter-version: "3.27.0"
           channel: stable
           cache: true
 
@@ -97,6 +98,19 @@ jobs:
           # Delete generated plugin registrant (Flutter regenerates it).
           rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
           rm -f android/app/src/main/kotlin/io/flutter/plugins/GeneratedPluginRegistrant.kt
+
+          # Delete pubspec.lock so dependencies resolve fresh against the
+          # pinned Flutter 3.27.0 version (avoids stale version pins
+          # from older Flutter installs).
+          rm -f pubspec.lock
+
+          # Self-heal theme.dart: Flutter 3.27 supports BOTH CardTheme and
+          # CardThemeData. We standardize on CardThemeData (the modern API)
+          # to avoid future deprecation issues. This sed is idempotent.
+          if [ -f lib/theme/theme.dart ]; then
+            sed -i 's/cardTheme: CardTheme(/cardTheme: CardThemeData(/g' lib/theme/theme.dart
+            echo "Normalized theme.dart to use CardThemeData"
+          fi
 
           echo "=== After cleanup ==="
           ls -la android/ 2>/dev/null

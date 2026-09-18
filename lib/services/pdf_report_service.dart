@@ -123,6 +123,9 @@ class PdfReportService {
       ..sort((a, b) => a.paidAt.compareTo(b.paidAt));
 
     final balance = loan.totalPayable - totalPaid;
+    // `progress` is kept for clarity but the effective progress (which
+    // respects all-time total in monthly statements) is what gets rendered.
+    // ignore: unused_local_variable
     final progress = loan.totalPayable > 0
         ? (totalPaid / loan.totalPayable).clamp(0.0, 1.0).toDouble()
         : 0.0;
