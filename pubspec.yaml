@@ -1,11 +1,11 @@
 name: loan_tracker
 description: A personal loan repayment tracker with M-Pesa SMS auto-import, daily reminders, offline SQLite storage, PDF reports, payment receipts, monthly statements, lender contact, home-screen widget, and payment trend chart.
 publish_to: 'none'
-version: 1.6.0+8
+version: 1.7.0+11
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
-  flutter: '>=3.27.0'
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
 
 dependencies:
   flutter:

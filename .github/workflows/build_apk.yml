@@ -4,15 +4,23 @@ name: Build APK
 # are left empty. Produces a signed debug-keystore release APK that installs
 # on any Android phone without needing Google Play.
 #
-# This workflow is SELF-HEALING: it cleans the repo of any legacy Groovy
-# gradle files and writes the correct declarative Kotlin DSL files BEFORE
-# running the build. So even if the user has stale .gradle files committed,
-# the build will still succeed.
+# TOOLCHAIN (audited 2026-09-18):
+#   Flutter 3.47.4   (pinned)
+#   Dart   3.13.3    (supplied by Flutter 3.47.4)
+#   Java   17        (required by AGP 8.x)
+#   Gradle 8.14.0    (declared in gradle-wrapper.properties)
+#   AGP    8.11.1    (declared in settings.gradle.kts)
+#   Kotlin 2.2.20    (declared in settings.gradle.kts)
+#
+# The namespace injection for legacy plugins (e.g. telephony 0.2.0) is
+# implemented at the Gradle config level in android/build.gradle.kts via
+# subprojects{...}. This is repository-level and survives clean checkouts.
+
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Semantic version (e.g. 1.4.0). Leave empty to auto-bump patch."
+        description: "Semantic version (e.g. 1.7.0). Leave empty to auto-bump patch."
         required: false
         default: ""
       build_number:
@@ -54,36 +62,40 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Pin to Flutter 3.27.0 — the sweet spot:
-      #   - Supports BOTH CardTheme (old) and CardThemeData (new Material 3 API)
-      #   - Does NOT auto-migrate gradle files (unlike 3.32+)
-      #   - Stable, well-tested, has all security patches up to 3.27.x
-      # Using a SPECIFIC version (not "stable") means reproducible builds.
-      - name: Setup Flutter 3.27.0 (pinned for stability)
+      # Flutter 3.47.4 — the audited, pinned version. Do NOT use channel:stable
+      # (would drift to newer versions and re-introduce compatibility drift).
+      - name: Setup Flutter 3.47.4 (pinned for reproducibility)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.27.0"
+          flutter-version: "3.47.4"
           channel: stable
           cache: true
 
       - name: Show tool versions
         run: |
+          echo "=== Flutter ==="
           flutter --version
+          echo ""
+          echo "=== Dart ==="
           dart --version
+          echo ""
+          echo "=== Java ==="
           java -version
+          echo ""
+          echo "=== Gradle wrapper ==="
+          cat android/gradle/wrapper/gradle-wrapper.properties | grep distributionUrl
 
       # ------------------------------------------------------------------
-      # SELF-HEALING GRADLE CLEANUP
+      # Defensive cleanup — remove any legacy Groovy gradle files that
+      # would conflict with the declarative .kts files. This guarantees
+      # the build always starts from a clean state regardless of repo
+      # history (in case old files get re-committed accidentally).
       # ------------------------------------------------------------------
-      # Delete any legacy Groovy .gradle files that would conflict with the
-      # declarative .gradle.kts files. This guarantees the build always
-      # starts from a clean state regardless of repo history.
       - name: Remove legacy Groovy gradle files
         shell: bash
         run: |
           echo "=== Before cleanup ==="
-          ls -la android/ 2>/dev/null || true
-          ls -la android/app/ 2>/dev/null || true
+          find android -maxdepth 3 -name "*.gradle*" -type f 2>/dev/null || true
 
           # Delete old Groovy-style gradle files (the .kts versions are
           # the source of truth for Flutter 3.16+).
@@ -91,8 +103,7 @@ jobs:
           rm -f android/settings.gradle
           rm -f android/app/build.gradle
 
-          # Also delete any stale local.properties (it should be generated
-          # fresh by the workflow, never committed).
+          # Delete stale local.properties (regenerated below).
           rm -f android/local.properties
 
           # Delete generated plugin registrant (Flutter regenerates it).
@@ -100,161 +111,12 @@ jobs:
           rm -f android/app/src/main/kotlin/io/flutter/plugins/GeneratedPluginRegistrant.kt
 
           # Delete pubspec.lock so dependencies resolve fresh against the
-          # pinned Flutter 3.27.0 version (avoids stale version pins
-          # from older Flutter installs).
+          # pinned Flutter 3.47.4 version.
           rm -f pubspec.lock
 
-          # Self-heal theme.dart: Flutter 3.27 supports BOTH CardTheme and
-          # CardThemeData. We standardize on CardThemeData (the modern API)
-          # to avoid future deprecation issues. This sed is idempotent.
-          if [ -f lib/theme/theme.dart ]; then
-            sed -i 's/cardTheme: CardTheme(/cardTheme: CardThemeData(/g' lib/theme/theme.dart
-            echo "Normalized theme.dart to use CardThemeData"
-          fi
-
+          echo ""
           echo "=== After cleanup ==="
-          ls -la android/ 2>/dev/null
-          ls -la android/app/ 2>/dev/null
-
-      # ------------------------------------------------------------------
-      # Defensive: write the .kts files from scratch, ignoring whatever is
-      # in the repo. This GUARANTEES the build always uses the correct
-      # declarative plugins{} block.
-      # ------------------------------------------------------------------
-      - name: Write settings.gradle.kts (defensive)
-        shell: bash
-        run: |
-          mkdir -p android
-          cat > android/settings.gradle.kts <<'GRADLE_EOF'
-          // Top-level Flutter settings.gradle.kts (declarative plugins{} block).
-          // Required by Flutter 3.16+.
-
-          pluginManagement {
-              val flutterSdkPath = run {
-                  val properties = java.util.Properties()
-                  file("local.properties").inputStream().use { properties.load(it) }
-                  val flutterSdkPath = properties.getProperty("flutter.sdk")
-                  require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
-                  flutterSdkPath
-              }
-
-              includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
-
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-
-          plugins {
-              id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-              id("com.android.application") version "8.7.0" apply false
-              id("org.jetbrains.kotlin.android") version "1.9.10" apply false
-          }
-
-          include(":app")
-          GRADLE_EOF
-          echo "Wrote android/settings.gradle.kts:"
-          cat android/settings.gradle.kts
-
-      - name: Write build.gradle.kts (root, defensive)
-        shell: bash
-        run: |
-          cat > android/build.gradle.kts <<'GRADLE_EOF'
-          // Top-level Android build file (Kotlin DSL).
-
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-
-          val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
-          rootProject.layout.buildDirectory.value(newBuildDir)
-
-          subprojects {
-              val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-              project.layout.buildDirectory.value(newSubprojectBuildDir)
-          }
-
-          subprojects {
-              project.evaluationDependsOn(":app")
-          }
-
-          tasks.register<Delete>("clean") {
-              delete(rootProject.layout.buildDirectory)
-          }
-          GRADLE_EOF
-          echo "Wrote android/build.gradle.kts:"
-          cat android/build.gradle.kts
-
-      - name: Write app/build.gradle.kts (defensive)
-        shell: bash
-        run: |
-          mkdir -p android/app
-          cat > android/app/build.gradle.kts <<'GRADLE_EOF'
-          // Android app module build configuration (Kotlin DSL, declarative plugins{}).
-          // Versioning: code (integer) = build number, name (string) = semantic version.
-
-          plugins {
-              id("com.android.application")
-              id("kotlin-android")
-              // The Flutter Gradle Plugin must be applied AFTER android & kotlin.
-              id("dev.flutter.flutter-gradle-plugin")
-          }
-
-          android {
-              namespace = "com.example.loan_tracker"
-              compileSdk = 36
-              ndkVersion = flutter.ndkVersion
-
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
-
-              kotlinOptions {
-                  jvmTarget = "17"
-              }
-
-              sourceSets {
-                  getByName("main") {
-                      java.srcDirs("src/main/kotlin")
-                  }
-              }
-
-              defaultConfig {
-                  applicationId = "com.example.loan_tracker"
-                  minSdk = 21
-                  targetSdk = 36
-                  versionCode = flutter.versionCode.toInt()
-                  versionName = flutter.versionName
-              }
-
-              buildTypes {
-                  release {
-                      // Sign release with the debug keystore so the APK installs on a phone
-                      // without needing a separate upload key. Replace with a real keystore
-                      // before publishing to Play Store.
-                      signingConfig = signingConfigs.getByName("debug")
-                      // Kotlin DSL uses `is` prefix for boolean Gradle properties.
-                      isMinifyEnabled = false
-                      isShrinkResources = false
-                  }
-                  debug {
-                      signingConfig = signingConfigs.getByName("debug")
-                  }
-              }
-          }
-
-          flutter {
-              source = "../.."
-          }
-          GRADLE_EOF
-          echo "Wrote android/app/build.gradle.kts:"
-          cat android/app/build.gradle.kts
+          find android -maxdepth 3 -name "*.gradle*" -type f 2>/dev/null
 
       # ------------------------------------------------------------------
       # Version handling — auto-bump or accept manual override
@@ -339,6 +201,8 @@ jobs:
 
       # ------------------------------------------------------------------
       # Static analysis — does NOT block the build on warnings.
+      # Errors still block (which is correct because errors would also
+      # fail the actual APK build below).
       # ------------------------------------------------------------------
       - name: Static analysis (errors block, warnings do not)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -404,19 +268,19 @@ jobs:
           compression-level: 0
 
       # ------------------------------------------------------------------
-      # Commit version bump + gradle fixes (best-effort)
+      # Commit version bump (best-effort; won't fail the build if push fails)
       # ------------------------------------------------------------------
-      - name: Commit & push changes
+      - name: Commit & push version bump
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pubspec.yaml android/
+          git add pubspec.yaml
           if git diff --cached --quiet; then
-            echo "No changes to commit."
+            echo "No version changes to commit."
             exit 0
           fi
-          git commit -m "chore: bump version to v${{ steps.next.outputs.new_version }}+${{ steps.next.outputs.new_build }} + gradle cleanup [skip ci]"
+          git commit -m "chore: bump version to v${{ steps.next.outputs.new_version }}+${{ steps.next.outputs.new_build }} [skip ci]"
           git pull --rebase origin "${GITHUB_REF_NAME}" || true
           git push origin "HEAD:${GITHUB_REF_NAME}" || {
             echo "::warning::Failed to push (likely a concurrent build). The APK artifact is still available above."

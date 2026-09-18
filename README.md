@@ -27,7 +27,7 @@ A personal loan repayment tracker for Android, built with **Flutter (Dart)** and
 
 | Layer | Tech |
 | --- | --- |
-| UI | Flutter 3.19+, Material 3, Google Fonts (Inter) |
+| UI | Flutter 3.47+, Material 3, Google Fonts (Inter) |
 | State | Provider |
 | Storage | sqflite + path |
 | Notifications | flutter_local_notifications + timezone |
@@ -134,7 +134,7 @@ If you want to jump to a specific version (e.g. `2.0.0` for a breaking change, o
 ### Option B — Local build
 
 ```bash
-# Install Flutter 3.19+ (https://flutter.dev)
+# Install Flutter 3.47+ (https://flutter.dev)
 flutter pub get
 flutter run                      # debug on connected device/emulator
 flutter build apk --debug        # build debug APK
