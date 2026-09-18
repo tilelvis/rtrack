@@ -30,9 +30,16 @@ Thumbs.db
 # Local config (NEVER commit these)
 .env
 local.properties
+# Generic signing keys — but allow our committed dev keystore
+# (android/key.properties + android/app/keystore/*.keystore) so that
+# CI builds share the same signing certificate (enables in-place updates).
 key.properties
 *.keystore
 *.jks
+# Exceptions: our persistent dev keystore + its credentials
+!android/key.properties
+!android/app/keystore/
+!android/app/keystore/*.keystore
 
 # Lock file — let CI regenerate fresh for the pinned Flutter version
 pubspec.lock

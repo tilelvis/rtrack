@@ -2,6 +2,12 @@
 
 A personal loan repayment tracker for Android, built with **Flutter (Dart)** and **Material 3**. Designed for tracking a single short-term loan (e.g. a 30-day loan payable in weekly or custom-interval installments), recording M-Pesa payment messages, and reminding you daily to make a payment.
 
+> ⚠️ **If you're modifying the build, gradle files, or CI workflow —
+> READ [`BUILD_AUDIT.md`](./BUILD_AUDIT.md) FIRST.**
+> It documents the exact toolchain (Flutter 3.47.4, AGP 8.11.1, Kotlin
+> 2.2.20, Gradle 8.14.0, Java 17), every fix that was applied, and the
+> rules an agent must follow to avoid re-introducing build failures.
+
 ## Features
 
 - **Loan setup** — principal, interest rate, start/due dates, weekly or custom-day payment interval, expected amount per interval, optional SMS auto-import keyword.

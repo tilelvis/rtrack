@@ -14,12 +14,33 @@
 //   - flutter_local_notifications 17.x: requires core library desugaring
 //     (https://pub.dev/packages/flutter_local_notifications#android-manifest)
 //   - All other native plugins: standard config, no special requirements
+//
+// SIGNING STRATEGY (in-place updates without uninstall):
+//   Release builds are signed with a persistent self-signed keystore
+//   committed to the repo at android/app/keystore/loan-tracker-release.keystore
+//   Credentials are read from android/key.properties.
+//   This ensures every CI build produces an APK with the SAME signing
+//   certificate, so Android allows in-place updates (no uninstall required).
+
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied AFTER android & kotlin.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+// ---------------------------------------------------------------------------
+// Load the persistent release keystore credentials.
+// Falls back to the debug keystore if key.properties is missing (e.g.
+// during local dev builds where the developer hasn't set up signing).
+// ---------------------------------------------------------------------------
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -72,12 +93,34 @@ android {
         multiDexEnabled = true
     }
 
+    // ---------------------------------------------------------------------------
+    // Signing configs — release uses the persistent committed keystore so
+    // that consecutive builds share the same certificate (allows in-place
+    // updates without uninstall). Falls back to debug keystore if the
+    // key.properties file is missing (local dev builds only).
+    // ---------------------------------------------------------------------------
+    signingConfigs {
+        create("release") {
+            if (keystoreProperties.isNotEmpty()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Sign release with the debug keystore so the APK installs on a phone
-            // without needing a separate upload key. Replace with a real keystore
-            // before publishing to Play Store.
-            signingConfig = signingConfigs.getByName("debug")
+            // Sign release with the PERSISTENT committed keystore so that
+            // every CI build shares the same signing certificate. This
+            // allows Android to apply in-place updates (no uninstall needed).
+            // Falls back to debug keystore if key.properties is missing.
+            signingConfig = if (keystoreProperties.isNotEmpty()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             // Kotlin DSL uses `is` prefix for boolean Gradle properties
             // (Groovy silently translates, Kotlin is strict).
             isMinifyEnabled = false

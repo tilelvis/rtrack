@@ -1,11 +1,19 @@
 name: Build APK
 
+# ============================================================================
+# ⚠️  BEFORE MODIFYING THIS FILE — READ BUILD_AUDIT.md (in repo root)
+# ============================================================================
+# This workflow is the result of a comprehensive audit (v1.7.2+13).
+# It encodes a specific toolchain that is known to work. Changing any
+# version number without re-auditing will likely re-introduce the
+# chain of failures documented in BUILD_AUDIT.md §2.
+#
 # Manual trigger only. Auto-bumps patch version + build number when inputs
 # are left empty. Produces a signed debug-keystore release APK that installs
 # on any Android phone without needing Google Play.
 #
 # TOOLCHAIN (audited 2026-09-18):
-#   Flutter 3.47.4   (pinned)
+#   Flutter 3.47.4   (pinned — do NOT use channel: stable)
 #   Dart   3.13.3    (supplied by Flutter 3.47.4)
 #   Java   17        (required by AGP 8.x)
 #   Gradle 8.14.0    (declared in gradle-wrapper.properties)

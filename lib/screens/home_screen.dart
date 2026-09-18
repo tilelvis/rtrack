@@ -8,6 +8,7 @@ import '../widgets/payment_history_list.dart';
 import '../widgets/payment_trend_chart.dart';
 import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
+import 'manual_payment_screen.dart';
 import 'mpesa_paste_screen.dart';
 import 'sms_scan_screen.dart';
 import 'settings_screen.dart';
@@ -92,13 +93,34 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: screens[_index],
       floatingActionButton: hasLoan
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MpesaPasteScreen()),
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text('Log Payment'),
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Manual entry — quick cash payment without M-Pesa code
+                FloatingActionButton.extended(
+                  heroTag: 'fab_manual',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ManualPaymentScreen()),
+                  ),
+                  backgroundColor: AppTheme.surfaceAlt,
+                  foregroundColor: AppTheme.accent,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Manual'),
+                ),
+                const SizedBox(width: 10),
+                // M-Pesa paste / scan — primary action
+                FloatingActionButton.extended(
+                  heroTag: 'fab_mpesa',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MpesaPasteScreen()),
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Log Payment'),
+                ),
+              ],
             )
           : FloatingActionButton.extended(
               onPressed: () => Navigator.push(

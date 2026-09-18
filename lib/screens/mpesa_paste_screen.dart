@@ -4,6 +4,7 @@ import '../models/payment.dart';
 import '../providers/loan_provider.dart';
 import '../services/mpesa_parser.dart';
 import '../theme/theme.dart';
+import 'manual_payment_screen.dart';
 
 class MpesaPasteScreen extends StatefulWidget {
   const MpesaPasteScreen({super.key});
@@ -131,11 +132,24 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
             _parsedCard(_parsed!),
           ],
           const SizedBox(height: 16),
-          // Manual entry shortcut
+          // Manual entry shortcut — opens ManualPaymentScreen with the
+          // already-parsed data as a prefill, so the user can fix the
+          // missing/incorrect fields rather than re-typing everything.
           TextButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/manual'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ManualPaymentScreen(
+                  prefill: _parsed,
+                ),
+              ),
+            ),
             icon: const Icon(Icons.edit_outlined),
-            label: const Text('Enter payment manually instead'),
+            label: Text(
+              _parsed == null
+                  ? 'Enter payment manually instead'
+                  : 'Edit parsed details manually',
+            ),
           ),
         ],
       ),
