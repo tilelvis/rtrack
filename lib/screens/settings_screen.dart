@@ -31,9 +31,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.primary,
+                primary: Theme.of(context).colorScheme.primary,
                 onPrimary: const Color(0xFF001100),
-                surface: AppTheme.surface,
+                surface: Theme.of(context).colorScheme.surface,
               ),
         ),
         child: child!,
@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Maximum 3 reminder times supported.'),
-          backgroundColor: AppTheme.warning,
+          backgroundColor: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
         ),
       );
       return;
@@ -88,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Reminders set: $timesStr'),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
@@ -119,9 +119,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.primary,
+                primary: Theme.of(context).colorScheme.primary,
                 onPrimary: const Color(0xFF001100),
-                surface: AppTheme.surface,
+                surface: Theme.of(context).colorScheme.surface,
               ),
         ),
         child: child!,
@@ -158,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Statement ready — share or save it.'),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     } catch (e) {
@@ -166,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Failed: $e'),
-          backgroundColor: AppTheme.danger,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -188,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.palette_outlined, size: 18, color: AppTheme.accent),
+                    Icon(Icons.palette_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                     SizedBox(width: 8),
                     Text(
                       'Theme',
@@ -200,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text(
                   'Switch between light and dark. System follows your phone\'s setting.',
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -216,13 +216,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       margin: const EdgeInsets.only(bottom: 6),
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppTheme.primary.withOpacity(0.1)
-                            : AppTheme.surfaceAlt,
+                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                            : Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: selected
-                              ? AppTheme.primary
-                              : AppTheme.border,
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.outlineVariant,
                           width: selected ? 1.5 : 1,
                         ),
                       ),
@@ -236,8 +236,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     : Icons.brightness_auto_outlined,
                             size: 20,
                             color: selected
-                                ? AppTheme.primary
-                                : AppTheme.textSecondary,
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -245,8 +245,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               mode.label,
                               style: TextStyle(
                                 color: selected
-                                    ? AppTheme.primary
-                                    : AppTheme.textPrimary,
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.onSurface,
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -255,7 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           if (selected)
                             const Icon(Icons.check_circle,
-                                color: AppTheme.primary, size: 20),
+                                color: Theme.of(context).colorScheme.primary, size: 20),
                         ],
                       ),
                     ),
@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.alarm, color: AppTheme.primary, size: 18),
+                    const Icon(Icons.alarm, color: Theme.of(context).colorScheme.primary, size: 18),
                     const SizedBox(width: 8),
                     const Text(
                       'Daily reminder times',
@@ -285,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       '${_reminderTimes.length}/3',
                       style: TextStyle(
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -296,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Add multiple reminders (e.g. morning 8 AM + evening 7 PM) '
                   'so you never forget a payment. Max 3 slots.',
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -319,7 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(width: 8),
                           IconButton(
                             icon: const Icon(Icons.close, size: 18,
-                                color: AppTheme.danger),
+                                color: Theme.of(context).colorScheme.error),
                             onPressed: () => _removeReminderSlot(i),
                             tooltip: 'Remove this reminder',
                           ),
@@ -374,11 +374,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.15),
+                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+                          border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                         ),
-                        child: const Icon(Icons.person, color: AppTheme.accent),
+                        child: const Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -393,7 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Text(
                                 provider.activeLoan!.lenderPhone!,
                                 style: TextStyle(
-                                  color: AppTheme.textSecondary,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 12,
                                 ),
                               ),
@@ -401,7 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Text(
                                 provider.activeLoan!.lenderEmail!,
                                 style: TextStyle(
-                                  color: AppTheme.textSecondary,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 12,
                                 ),
                               ),
@@ -433,7 +433,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Text(
                 'No lender contact saved. Edit your loan to add the lender\'s '
                 'name, phone, and email for one-tap call/WhatsApp/email.',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -452,7 +452,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'All transactions, totals, M-Pesa codes, dates — shareable PDF.',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -465,7 +465,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: const Text('Generate Full PDF Report'),
                   ),
                 ),
-                Divider(height: 28, color: AppTheme.border),
+                Divider(height: 28, color: Theme.of(context).colorScheme.outlineVariant),
                 const Text(
                   'Monthly Statement',
                   style: TextStyle(fontWeight: FontWeight.w700),
@@ -474,7 +474,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text(
                   'Statement for a single month — perfect to email to your lender '
                   'as proof of payments made that month.',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -507,17 +507,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Principal: Ksh ${provider.activeLoan!.principal.toStringAsFixed(2)}',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                   ),
                   Text(
                     'Due: ${provider.activeLoan!.dueDate.day}/${provider.activeLoan!.dueDate.month}/${provider.activeLoan!.dueDate.year}',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                   ),
                   if (provider.activeLoan!.keyword != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       'SMS keyword: "${provider.activeLoan!.keyword}"',
-                      style: const TextStyle(color: AppTheme.accent, fontSize: 12),
+                      style: const TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -526,7 +526,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       final confirmed = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
-                          backgroundColor: AppTheme.surface,
+                          backgroundColor: Theme.of(context).colorScheme.surface,
                           title: const Text('Delete this loan?'),
                           content: const Text(
                             'This will delete all associated payments as well. This cannot be undone.',
@@ -538,7 +538,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Delete', style: TextStyle(color: AppTheme.danger)),
+                              child: const Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                             ),
                           ],
                         ),
@@ -548,8 +548,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await NotificationService().cancelAll();
                       }
                     },
-                    icon: const Icon(Icons.delete_outline, color: AppTheme.danger),
-                    label: const Text('Delete loan', style: TextStyle(color: AppTheme.danger)),
+                    icon: const Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                    label: const Text('Delete loan', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ),
                 ],
               ),
@@ -561,7 +561,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'No active loan. Create one from the Home screen.',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -580,7 +580,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Version 1.3.0 • Build 4',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -588,7 +588,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'PDF reports, payment receipts, monthly statements, '
                   'home-screen widget, lender contact, and multiple daily reminders. '
                   'Built with Flutter & Material 3.',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
               ],
             ),
@@ -630,7 +630,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('PDF report ready — share or save it.'),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     } catch (e) {
@@ -638,7 +638,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to generate PDF: $e'),
-          backgroundColor: AppTheme.danger,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -650,7 +650,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
-          color: AppTheme.accent,
+          color: Theme.of(context).colorScheme.secondary,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,

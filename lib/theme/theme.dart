@@ -1,271 +1,731 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design system for Loan Tracker.
+/// Material 3 design system for LoanTracker.
 ///
-/// Supports BOTH dark (default, brand identity) and light modes.
-/// Mode is selected at runtime via [AppTheme.dark] / [AppTheme.light].
+/// Inspired by the reference screens (premium fintech, midnight navy
+/// dark mode, off-white light mode) but translated into proper
+/// Material 3 — no neon glow, no cyberpunk, no scattered hardcoded colors.
 ///
-/// All brand colors (primary, accent, danger, etc.) are `static const`
-/// so they can be used inside `const` widget constructors.
+/// ARCHITECTURE
+/// ============
+/// 1. Two complete ColorSchemes (light + dark) — the source of truth.
+/// 2. A ThemeExtension<LoanTrackerDesignTokens> for LoanTracker-specific
+///    semantic colors not covered by ColorScheme (success, warning,
+///    pending, chart colors, brand accents).
+/// 3. Widgets obtain colors via:
+///       Theme.of(context).colorScheme.X           (standard M3)
+///       Theme.of(context).extension<LoanTrackerDesignTokens>()!.X  (custom)
+///    NEVER via AppTheme.X directly.
 ///
-/// Mode-dependent tokens (bg, surface, text) are NOT const — they are
-/// resolved at runtime via [AppTheme.of] which returns a [ThemeTokens]
-/// object for the current brightness. Widgets that need mode-dependent
-/// colors should NOT use `const` for those styles.
+/// COLOR PHILOSOPHY
+/// ================
+/// - Primary: cyan/blue (interaction, navigation selection, links)
+/// - Secondary: magenta (ACCENT ONLY — never the dominant color)
+/// - Tertiary: green (positive financial progress, successful payments)
+/// - Error: red (overdue, destructive)
+/// - Surface: navy (dark) / off-white (light)
+///
+/// Dark mode is "premium midnight fintech" — deep navy, not pure black.
+/// Light mode is "premium banking app" — off-white, soft elevation.
 class AppTheme {
-  // ---- Brand colors (mode-independent, const) ----
-  // In light mode, primary uses `primaryLight` (softer). In dark mode,
-  // primary uses `primaryDark` (neon). Both are const so they can be
-  // used in const widget constructors.
-  static const Color primary = Color(0xFF1FAE0D);   // printable green
-  static const Color primaryDark = Color(0xFF39FF14); // neon green (dark mode)
-  static const Color primaryLight = Color(0xFF1FAE0D); // soft green (light mode)
-  static const Color accent = Color(0xFF00A0B0);    // teal/cyan
-  static const Color accentDark = Color(0xFF00E5FF); // neon cyan
-  static const Color accentLight = Color(0xFF00A0B0); // soft teal
-  static const Color magenta = Color(0xFFFF2BD6);
-  static const Color warning = Color(0xFFFFB020);
-  static const Color danger = Color(0xFFFF3B3B);
+  AppTheme._();
 
-  // ---- Dark mode tokens (const) ----
-  static const Color darkBg = Color(0xFF0A0E14);
-  static const Color darkSurface = Color(0xFF121821);
-  static const Color darkSurfaceAlt = Color(0xFF1A2230);
-  static const Color darkTextPrimary = Color(0xFFF5F7FA);
-  static const Color darkTextSecondary = Color(0xFF9BA8C0);
-  static const Color darkBorder = Color(0xFF243044);
+  // ===========================================================================
+  // SEMANTIC BRAND COLORS — used by both ColorScheme and DesignTokens
+  // ===========================================================================
 
-  // ---- Light mode tokens (const) ----
-  static const Color lightBg = Color(0xFFF5F7FA);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightSurfaceAlt = Color(0xFFEFF3F8);
-  static const Color lightTextPrimary = Color(0xFF0A0E14);
-  static const Color lightTextSecondary = Color(0xFF5A6877);
-  static const Color lightBorder = Color(0xFFD8DFE8);
+  // Primary: cyan/blue — interaction color
+  static const Color _primaryLight = Color(0xFF0064A8);   // strong blue on light bg
+  static const Color _primaryDark = Color(0xFF62B5E8);    // soft cyan on dark bg
 
-  // ---- Backward-compatibility getters ----
-  // These return the DARK mode tokens by default. Widgets that were
-  // written before light mode support was added will continue to work
-  // (they'll use dark colors). New widgets that need to respect light
-  // mode should use [AppTheme.of(context)] instead.
-  //
-  // IMPORTANT: these are NOT const, so they can't be used inside
-  // `const` widget constructors. If a widget needs const colors, use
-  // the explicit `darkBg` / `lightBg` / etc. constants.
-  static Color get bg => _current.bg;
-  static Color get surface => _current.surface;
-  static Color get surfaceAlt => _current.surfaceAlt;
-  static Color get textPrimary => _current.textPrimary;
-  static Color get textSecondary => _current.textSecondary;
-  static Color get border => _current.border;
+  // Secondary: magenta/pink — accent only
+  static const Color _secondaryLight = Color(0xFF9C2D5C);
+  static const Color _secondaryDark = Color(0xFFFFB0D0);
 
-  static ThemeTokens _current = ThemeTokens(
-    bg: darkBg,
-    surface: darkSurface,
-    surfaceAlt: darkSurfaceAlt,
-    textPrimary: darkTextPrimary,
-    textSecondary: darkTextSecondary,
-    border: darkBorder,
-  );
+  // Tertiary: green — positive financial progress
+  static const Color _tertiaryLight = Color(0xFF1F7A3D);
+  static const Color _tertiaryDark = Color(0xFF7DD9A1);
 
-  /// Resolve tokens for the given brightness. Call from MaterialApp's
-  /// builder or from any widget that needs to switch on brightness.
-  static ThemeTokens of(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    return brightness == Brightness.light ? lightTokens : darkTokens;
-  }
+  // Error: red — destructive / overdue
+  static const Color _errorLight = Color(0xFFBA1A1A);
+  static const Color _errorDark = Color(0xFFFFB4AB);
 
-  static const ThemeTokens darkTokens = ThemeTokens(
-    bg: darkBg,
-    surface: darkSurface,
-    surfaceAlt: darkSurfaceAlt,
-    textPrimary: darkTextPrimary,
-    textSecondary: darkTextSecondary,
-    border: darkBorder,
-  );
+  // ===========================================================================
+  // DARK MODE — "premium midnight fintech"
+  // Deep navy background (NOT pure black), elevated navy surfaces.
+  // ===========================================================================
+  static const Color _darkBg = Color(0xFF0B1120);          // deep midnight navy
+  static const Color _darkSurface = Color(0xFF131C2E);    // elevated navy
+  static const Color _darkSurfaceContainer = Color(0xFF1A2540); // grouped content
+  static const Color _darkSurfaceHigh = Color(0xFF223052);    // highest elevation
+  static const Color _darkBorder = Color(0xFF2A3858);      // subtle navy border
+  static const Color _darkTextPrimary = Color(0xFFEAF0FB);  // near-white
+  static const Color _darkTextSecondary = Color(0xFF9BA8C6); // muted blue-gray
 
-  static const ThemeTokens lightTokens = ThemeTokens(
-    bg: lightBg,
-    surface: lightSurface,
-    surfaceAlt: lightSurfaceAlt,
-    textPrimary: lightTextPrimary,
-    textSecondary: lightTextSecondary,
-    border: lightBorder,
-  );
+  // ===========================================================================
+  // LIGHT MODE — "premium banking app"
+  // Off-white background, white surfaces, subtle cool-gray borders.
+  // ===========================================================================
+  static const Color _lightBg = Color(0xFFF4F6FB);        // very light cool gray
+  static const Color _lightSurface = Color(0xFFFFFFFF);   // pure white
+  static const Color _lightSurfaceContainer = Color(0xFFEFF2F8);
+  static const Color _lightSurfaceHigh = Color(0xFFE6EAF2);
+  static const Color _lightBorder = Color(0xFFD8DEE8);    // subtle cool gray
+  static const Color _lightTextPrimary = Color(0xFF0F1B2D);  // deep navy
+  static const Color _lightTextSecondary = Color(0xFF5A6B85); // slate
 
-  /// Update the static `_current` so legacy `AppTheme.bg` style getters
-  /// return the correct mode's tokens. Called from MaterialApp.builder.
-  static void _resolve(Brightness brightness) {
-    _current = brightness == Brightness.light ? lightTokens : darkTokens;
-  }
+  // ===========================================================================
+  // LOANTRACKER-SPECIFIC SEMANTIC TOKENS
+  // These are NOT in ColorScheme, so they live in ThemeExtension.
+  // ===========================================================================
 
-  /// Build a ThemeData for the requested brightness.
-  static ThemeData forBrightness(Brightness brightness) {
-    _resolve(brightness);
+  // Warning: amber — pending / due soon / attention
+  static const Color _warningLight = Color(0xFFB45300);
+  static const Color _warningDark = Color(0xFFFFB877);
 
+  // Chart palette
+  static const Color _chartPaidLight = Color(0xFF1F7A3D);   // emerald
+  static const Color _chartPaidDark = Color(0xFF7DD9A1);
+  static const Color _chartTargetLight = Color(0xFF0064A8);  // dashed target line
+  static const Color _chartTargetDark = Color(0xFF62B5E8);
+
+  // ===========================================================================
+  // LIGHT ColorScheme
+  // ===========================================================================
+  static ThemeData get light => _build(Brightness.light);
+
+  // ===========================================================================
+  // DARK ColorScheme
+  // ===========================================================================
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
     final isLight = brightness == Brightness.light;
-    final base = ThemeData(useMaterial3: true, brightness: brightness);
 
-    // In light mode, use the printable (softer) greens/cyans.
-    // In dark mode, use the neon variants.
-    final primaryColor = isLight ? primaryLight : primaryDark;
-    final accentColor = isLight ? accentLight : accentDark;
-
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: primaryColor,
+    final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: primaryColor,
-      secondary: accentColor,
-      surface: _current.surface,
-      error: danger,
-      onSurface: _current.textPrimary,
+      primary: isLight ? _primaryLight : _primaryDark,
+      onPrimary: isLight ? Colors.white : const Color(0xFF002A47),
+      primaryContainer: isLight
+          ? const Color(0xFFD5E3FF)
+          : const Color(0xFF004A75),
+      onPrimaryContainer: isLight
+          ? const Color(0xFF001D36)
+          : const Color(0xFFC7E5FF),
+      secondary: isLight ? _secondaryLight : _secondaryDark,
+      onSecondary: isLight ? Colors.white : const Color(0xFF56162E),
+      secondaryContainer: isLight
+          ? const Color(0xFFFFD8E5)
+          : const Color(0xFF7A2D52),
+      onSecondaryContainer: isLight
+          ? const Color(0xFF3E0720)
+          : const Color(0xFFFFD8E5),
+      tertiary: isLight ? _tertiaryLight : _tertiaryDark,
+      onTertiary: isLight ? Colors.white : const Color(0xFF00391C),
+      tertiaryContainer: isLight
+          ? const Color(0xFFB4EFC2)
+          : const Color(0xFF1E5232),
+      onTertiaryContainer: isLight
+          ? const Color(0xFF00210F)
+          : const Color(0xFFB4EFC2),
+      error: isLight ? _errorLight : _errorDark,
+      onError: isLight ? Colors.white : const Color(0xFF690005),
+      errorContainer: isLight
+          ? const Color(0xFFFFDAD6)
+          : const Color(0xFF93000A),
+      onErrorContainer: isLight
+          ? const Color(0xFF410002)
+          : const Color(0xFFFFDAD6),
+      surface: isLight ? _lightSurface : _darkSurface,
+      onSurface: isLight ? _lightTextPrimary : _darkTextPrimary,
+      surfaceContainerLowest: isLight ? Colors.white : const Color(0xFF060B14),
+      surfaceContainerLow: isLight ? _lightSurface : _darkSurface,
+      surfaceContainer: isLight
+          ? _lightSurfaceContainer
+          : _darkSurfaceContainer,
+      surfaceContainerHigh: isLight
+          ? _lightSurfaceHigh
+          : _darkSurfaceHigh,
+      surfaceContainerHighest: isLight
+          ? const Color(0xFFDDE3EE)
+          : const Color(0xFF2C3A5E),
+      onSurfaceVariant: isLight
+          ? _lightTextSecondary
+          : _darkTextSecondary,
+      outline: isLight ? _lightBorder : _darkBorder,
+      outlineVariant: isLight
+          ? const Color(0xFFC2C8D2)
+          : const Color(0xFF444B66),
+      shadow: isLight ? const Color(0xFF000000) : Colors.black,
+      scrim: Colors.black,
+      inverseSurface: isLight ? _darkSurface : _lightSurface,
+      onInverseSurface: isLight ? _darkTextPrimary : _lightTextPrimary,
+      inversePrimary: isLight ? _primaryDark : _primaryLight,
+    );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: isLight ? _lightBg : _darkBg,
+      canvasColor: isLight ? _lightBg : _darkBg,
+      visualDensity: VisualDensity.standard,
     );
 
     return base.copyWith(
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: _current.bg,
-      canvasColor: _current.bg,
+      // ---- Typography ----
       textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
         displayLarge: GoogleFonts.inter(
-          color: _current.textPrimary,
+          fontSize: 36,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.5,
+          color: colorScheme.onSurface,
+        ),
+        displayMedium: GoogleFonts.inter(
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.25,
+          color: colorScheme.onSurface,
+        ),
+        displaySmall: GoogleFonts.inter(
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+          color: colorScheme.onSurface,
         ),
         headlineMedium: GoogleFonts.inter(
-          color: _current.textPrimary,
+          fontSize: 20,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0,
+          color: colorScheme.onSurface,
+        ),
+        headlineSmall: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
         ),
         titleLarge: GoogleFonts.inter(
-          color: _current.textPrimary,
-          fontWeight: FontWeight.w600,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
         ),
-        bodyLarge: GoogleFonts.inter(color: _current.textPrimary),
-        bodyMedium: GoogleFonts.inter(color: _current.textSecondary),
+        titleMedium: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+        titleSmall: GoogleFonts.inter(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface,
+        ),
+        bodyLarge: GoogleFonts.inter(
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+          color: colorScheme.onSurface,
+        ),
+        bodyMedium: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        bodySmall: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        labelLarge: GoogleFonts.inter(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: colorScheme.onSurface,
+        ),
+        labelMedium: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: colorScheme.onSurfaceVariant,
+        ),
+        labelSmall: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
+
+      // ---- App Bar — flat, no elevation, surface-tinted ----
       appBarTheme: AppBarTheme(
-        backgroundColor: _current.bg,
-        foregroundColor: _current.textPrimary,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        foregroundColor: colorScheme.onSurface,
         elevation: 0,
+        scrolledUnderElevation: 0.5,
         centerTitle: false,
         titleTextStyle: GoogleFonts.inter(
-          color: _current.textPrimary,
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
         ),
       ),
+
+      // ---- Cards — Material 3 outlined / filled variants ----
       cardTheme: CardThemeData(
-        color: _current.surface,
-        elevation: isLight ? 1 : 0,
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: _current.border, width: 1),
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colorScheme.outlineVariant, width: 0.5),
         ),
       ),
+      cardElevation: 0,
+
+      // ---- Inputs ----
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _current.surfaceAlt,
-        hintStyle: TextStyle(color: _current.textSecondary),
+        fillColor: colorScheme.surfaceContainerHigh,
+        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _current.border),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _current.border),
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryColor, width: 1.5),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error),
+        ),
+      ),
+
+      // ---- Buttons — Material 3 hierarchy ----
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          minimumSize: const Size(0, 52),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: isLight ? Colors.white : const Color(0xFF001100),
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 0,
+          minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
-            fontSize: 16,
+            fontSize: 15,
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: accentColor,
-          side: BorderSide(color: accentColor),
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
+          minimumSize: const Size(0, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
           ),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+
+      // ---- FAB ----
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: isLight ? Colors.white : const Color(0xFF001100),
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
         ),
+        extendedTextStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
       ),
+
+      // ---- Chips — Material 3 tonal ----
       chipTheme: ChipThemeData(
-        backgroundColor: _current.surfaceAlt,
-        labelStyle: TextStyle(color: _current.textPrimary),
-        side: BorderSide(color: _current.border),
+        backgroundColor: colorScheme.surfaceContainerHigh,
+        labelStyle: TextStyle(color: colorScheme.onSurface),
+        side: BorderSide(color: colorScheme.outline, width: 0.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
+        selectedColor: colorScheme.primaryContainer,
       ),
-      dividerColor: _current.border,
+
+      // ---- Navigation Bar — Material 3 ----
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: _current.surface,
-        indicatorColor: primaryColor.withOpacity(0.18),
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        elevation: 0,
+        height: 72,
+        indicatorColor: colorScheme.primaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return TextStyle(
-            color: selected ? primaryColor : _current.textSecondary,
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          return GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: selected
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurfaceVariant,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? primaryColor : _current.textSecondary,
+            color: selected
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurfaceVariant,
             size: 22,
           );
         }),
       ),
+
+      // ---- ProgressIndicator — uses tertiary (green) for repayment progress ----
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colorScheme.tertiary,
+        linearTrackColor: colorScheme.surfaceContainerHigh,
+        circularTrackColor: colorScheme.surfaceContainerHigh,
+      ),
+
+      // ---- Divider ----
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant,
+        thickness: 0.5,
+        space: 1,
+      ),
+
+      // ---- Snackbar ----
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colorScheme.inverseSurface,
+        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      // ---- Dialog ----
+      dialogTheme: DialogThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
+        ),
+        contentTextStyle: GoogleFonts.inter(
+          fontSize: 14,
+          color: colorScheme.onSurfaceVariant,
+        ),
+      ),
+
+      // ---- BottomSheet ----
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        modalBackgroundColor: colorScheme.surface,
+        modalElevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+
+      // ---- ListTile ----
+      listTileTheme: ListTileThemeData(
+        iconColor: colorScheme.primary,
+        textColor: colorScheme.onSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      // ---- Extension ----
+      extensions: [
+        isLight ? _lightDesignTokens : _darkDesignTokens,
+      ],
     );
   }
 
-  static ThemeData get dark => forBrightness(Brightness.dark);
-  static ThemeData get light => forBrightness(Brightness.light);
+  // ===========================================================================
+  // LOANTRACKER DESIGN TOKENS — ThemeExtension
+  // ===========================================================================
+  static final LoanTrackerDesignTokens _lightDesignTokens =
+      LoanTrackerDesignTokens(
+    brightness: Brightness.light,
+    // Semantic statuses
+    success: _tertiaryLight,
+    onSuccess: Colors.white,
+    successContainer: const Color(0xFFB4EFC2),
+    onSuccessContainer: const Color(0xFF00210F),
+    warning: _warningLight,
+    onWarning: Colors.white,
+    warningContainer: const Color(0xFFFFE0B0),
+    onWarningContainer: const Color(0xFF3D1F00),
+    danger: _errorLight,
+    onDanger: Colors.white,
+    dangerContainer: const Color(0xFFFFDAD6),
+    onDangerContainer: const Color(0xFF410002),
+    // Brand accents
+    brandPrimary: _primaryLight,
+    brandAccent: _secondaryLight,
+    brandSuccess: _tertiaryLight,
+    // Charts
+    chartPaid: _chartPaidLight,
+    chartTarget: _chartTargetLight,
+    chartGrid: const Color(0xFFE0E5EE),
+    // Surfaces (extra levels beyond ColorScheme)
+    brandSurface: const Color(0xFFF0F7FF),     // very pale blue (hero card)
+    successSurface: const Color(0xFFE8F7ED),  // pale green
+    warningSurface: const Color(0xFFFFF4E0),  // pale amber
+    dangerSurface: const Color(0xFFFFEDEA),   // pale red
+    accentSurface: const Color(0xFFFFE6F0),   // pale pink
+    neutralSurface: const Color(0xFFEFF2F8),  // pale gray
+  );
+
+  static final LoanTrackerDesignTokens _darkDesignTokens =
+      LoanTrackerDesignTokens(
+    brightness: Brightness.dark,
+    // Semantic statuses
+    success: _tertiaryDark,
+    onSuccess: const Color(0xFF00391C),
+    successContainer: const Color(0xFF1E5232),
+    onSuccessContainer: const Color(0xFFB4EFC2),
+    warning: _warningDark,
+    onWarning: const Color(0xFF4A2800),
+    warningContainer: const Color(0xFF5A3D0E),
+    onWarningContainer: const Color(0xFFFFE0B0),
+    danger: _errorDark,
+    onDanger: const Color(0xFF690005),
+    dangerContainer: const Color(0xFF93000A),
+    onDangerContainer: const Color(0xFFFFDAD6),
+    // Brand accents
+    brandPrimary: _primaryDark,
+    brandAccent: _secondaryDark,
+    brandSuccess: _tertiaryDark,
+    // Charts
+    chartPaid: _chartPaidDark,
+    chartTarget: _chartTargetDark,
+    chartGrid: const Color(0xFF2A3858),
+    // Surfaces (extra levels beyond ColorScheme)
+    brandSurface: const Color(0xFF0F1F36),     // tinted hero card
+    successSurface: const Color(0xFF122D20),   // pale green tint
+    warningSurface: const Color(0xFF2E2310),   // pale amber tint
+    dangerSurface: const Color(0xFF2B1014),    // pale red tint
+    accentSurface: const Color(0xFF2A1424),     // pale pink tint
+    neutralSurface: const Color(0xFF1A2540),   // navy variant
+  );
 }
 
-/// Resolved color tokens for a specific brightness.
+/// LoanTracker-specific design tokens, exposed via ThemeExtension.
 ///
-/// All fields are `final` (not `const`-named with underscore prefix)
-/// so the class can be const-constructed.
+/// Use:
+/// ```dart
+/// final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
+/// Container(color: tokens.success);
+/// ```
+///
+/// These tokens cover semantic states (success / warning / danger) and
+/// brand accents that don't fit into Material's ColorScheme.
 @immutable
-class ThemeTokens {
-  final Color bg;
-  final Color surface;
-  final Color surfaceAlt;
-  final Color textPrimary;
-  final Color textSecondary;
-  final Color border;
+class LoanTrackerDesignTokens
+    extends ThemeExtension<LoanTrackerDesignTokens> {
+  final Brightness brightness;
 
-  const ThemeTokens({
-    required this.bg,
-    required this.surface,
-    required this.surfaceAlt,
-    required this.textPrimary,
-    required this.textSecondary,
-    required this.border,
+  // ---- Semantic statuses ----
+  final Color success;
+  final Color onSuccess;
+  final Color successContainer;
+  final Color onSuccessContainer;
+  final Color warning;
+  final Color onWarning;
+  final Color warningContainer;
+  final Color onWarningContainer;
+  final Color danger;
+  final Color onDanger;
+  final Color dangerContainer;
+  final Color onDangerContainer;
+
+  // ---- Brand accents ----
+  final Color brandPrimary;   // cyan/blue
+  final Color brandAccent;    // magenta (use sparingly!)
+  final Color brandSuccess;   // green
+
+  // ---- Charts ----
+  final Color chartPaid;
+  final Color chartTarget;
+  final Color chartGrid;
+
+  // ---- Tinted surfaces for emphasis cards ----
+  final Color brandSurface;
+  final Color successSurface;
+  final Color warningSurface;
+  final Color dangerSurface;
+  final Color accentSurface;
+  final Color neutralSurface;
+
+  const LoanTrackerDesignTokens({
+    required this.brightness,
+    required this.success,
+    required this.onSuccess,
+    required this.successContainer,
+    required this.onSuccessContainer,
+    required this.warning,
+    required this.onWarning,
+    required this.warningContainer,
+    required this.onWarningContainer,
+    required this.danger,
+    required this.onDanger,
+    required this.dangerContainer,
+    required this.onDangerContainer,
+    required this.brandPrimary,
+    required this.brandAccent,
+    required this.brandSuccess,
+    required this.chartPaid,
+    required this.chartTarget,
+    required this.chartGrid,
+    required this.brandSurface,
+    required this.successSurface,
+    required this.warningSurface,
+    required this.dangerSurface,
+    required this.accentSurface,
+    required this.neutralSurface,
   });
+
+  @override
+  ThemeExtension<LoanTrackerDesignTokens> copyWith({
+    Brightness? brightness,
+    Color? success,
+    Color? onSuccess,
+    Color? successContainer,
+    Color? onSuccessContainer,
+    Color? warning,
+    Color? onWarning,
+    Color? warningContainer,
+    Color? onWarningContainer,
+    Color? danger,
+    Color? onDanger,
+    Color? dangerContainer,
+    Color? onDangerContainer,
+    Color? brandPrimary,
+    Color? brandAccent,
+    Color? brandSuccess,
+    Color? chartPaid,
+    Color? chartTarget,
+    Color? chartGrid,
+    Color? brandSurface,
+    Color? successSurface,
+    Color? warningSurface,
+    Color? dangerSurface,
+    Color? accentSurface,
+    Color? neutralSurface,
+  }) {
+    return LoanTrackerDesignTokens(
+      brightness: brightness ?? this.brightness,
+      success: success ?? this.success,
+      onSuccess: onSuccess ?? this.onSuccess,
+      successContainer: successContainer ?? this.successContainer,
+      onSuccessContainer: onSuccessContainer ?? this.onSuccessContainer,
+      warning: warning ?? this.warning,
+      onWarning: onWarning ?? this.onWarning,
+      warningContainer: warningContainer ?? this.warningContainer,
+      onWarningContainer: onWarningContainer ?? this.onWarningContainer,
+      danger: danger ?? this.danger,
+      onDanger: onDanger ?? this.onDanger,
+      dangerContainer: dangerContainer ?? this.dangerContainer,
+      onDangerContainer: onDangerContainer ?? this.onDangerContainer,
+      brandPrimary: brandPrimary ?? this.brandPrimary,
+      brandAccent: brandAccent ?? this.brandAccent,
+      brandSuccess: brandSuccess ?? this.brandSuccess,
+      chartPaid: chartPaid ?? this.chartPaid,
+      chartTarget: chartTarget ?? this.chartTarget,
+      chartGrid: chartGrid ?? this.chartGrid,
+      brandSurface: brandSurface ?? this.brandSurface,
+      successSurface: successSurface ?? this.successSurface,
+      warningSurface: warningSurface ?? this.warningSurface,
+      dangerSurface: dangerSurface ?? this.dangerSurface,
+      accentSurface: accentSurface ?? this.accentSurface,
+      neutralSurface: neutralSurface ?? this.neutralSurface,
+    );
+  }
+
+  @override
+  ThemeExtension<LoanTrackerDesignTokens> lerp(
+    ThemeExtension<LoanTrackerDesignTokens>? other,
+    double t,
+  ) {
+    if (other is! LoanTrackerDesignTokens) return this;
+    return LoanTrackerDesignTokens(
+      brightness: t < 0.5 ? brightness : other.brightness,
+      success: Color.lerp(success, other.success, t)!,
+      onSuccess: Color.lerp(onSuccess, other.onSuccess, t)!,
+      successContainer: Color.lerp(successContainer, other.successContainer, t)!,
+      onSuccessContainer: Color.lerp(onSuccessContainer, other.onSuccessContainer, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      onWarning: Color.lerp(onWarning, other.onWarning, t)!,
+      warningContainer: Color.lerp(warningContainer, other.warningContainer, t)!,
+      onWarningContainer: Color.lerp(onWarningContainer, other.onWarningContainer, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      onDanger: Color.lerp(onDanger, other.onDanger, t)!,
+      dangerContainer: Color.lerp(dangerContainer, other.dangerContainer, t)!,
+      onDangerContainer: Color.lerp(onDangerContainer, other.onDangerContainer, t)!,
+      brandPrimary: Color.lerp(brandPrimary, other.brandPrimary, t)!,
+      brandAccent: Color.lerp(brandAccent, other.brandAccent, t)!,
+      brandSuccess: Color.lerp(brandSuccess, other.brandSuccess, t)!,
+      chartPaid: Color.lerp(chartPaid, other.chartPaid, t)!,
+      chartTarget: Color.lerp(chartTarget, other.chartTarget, t)!,
+      chartGrid: Color.lerp(chartGrid, other.chartGrid, t)!,
+      brandSurface: Color.lerp(brandSurface, other.brandSurface, t)!,
+      successSurface: Color.lerp(successSurface, other.successSurface, t)!,
+      warningSurface: Color.lerp(warningSurface, other.warningSurface, t)!,
+      dangerSurface: Color.lerp(dangerSurface, other.dangerSurface, t)!,
+      accentSurface: Color.lerp(accentSurface, other.accentSurface, t)!,
+      neutralSurface: Color.lerp(neutralSurface, other.neutralSurface, t)!,
+    );
+  }
+}
+
+/// Convenience accessor for the design tokens extension.
+LoanTrackerDesignTokens designTokensOf(BuildContext context) {
+  return Theme.of(context).extension<LoanTrackerDesignTokens>()!;
 }

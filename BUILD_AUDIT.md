@@ -1,7 +1,7 @@
 # BUILD AUDIT — loan_tracker / rtrack
 
 > **Read this FIRST before touching any build, gradle, or workflow file.**
-> Last verified working: 2026-09-18 (v1.9.0+16)
+> Last verified working: 2026-09-19 (v2.0.0+18)
 
 This document captures the complete audit that produced a working release
 APK build. It exists so future agents (human or AI) don't repeat the
@@ -383,7 +383,7 @@ flutter --version                    # should show Flutter 3.47.4
 
 ---
 
-## 9. CHANGELOG OF AUDIT FIXES (v1.9.0+16)
+## 9. CHANGELOG OF AUDIT FIXES (v2.0.0+18)
 
 | Version | Change |
 |---------|--------|
@@ -403,6 +403,8 @@ flutter --version                    # should show Flutter 3.47.4
 | v1.8.0+14 | **Persistent signing keystore**: committed `loan-tracker-release.keystore` + `key.properties` so consecutive builds share the same certificate (enables in-place updates without uninstall) |
 | v1.8.1+15 | Manual payment entry screen (was broken — `/manual` route didn't exist) |
 | v1.9.0+16 | **Light mode toggle**: 3-mode ThemeProvider (system/light/dark) with persistence. **Streak tracker**: gamified consecutive-days counter on dashboard. **Loan calculator**: real-time interest + per-day breakdown on Create Loan screen |
+| v1.9.1+17 | Fixed 5 analyzer errors from theme refactor (private named params, ThemeMode clash, invalid_const, runApp) |
+| v2.0.0+18 | **Complete Material 3 redesign**: proper ColorScheme (light+dark), ThemeExtension<LoanTrackerDesignTokens>, reusable AppCard/MetricCard/SectionHeader/StatusChip/IconBubble components, redesigned DashboardCard (hero+ring+metrics+CTA), StreakTracker, PaymentTrendChart (themed), TransactionsTable (Material list), HomeScreen (SliverAppBar + CustomScrollView + NavigationBar). 156 hardcoded AppTheme.X refs replaced with Theme.of(context).colorScheme.X. No business logic changed. |
 
 ---
 

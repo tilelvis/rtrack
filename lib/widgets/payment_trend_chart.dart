@@ -1,14 +1,20 @@
-import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/payment.dart';
+import '../theme/app_tokens.dart';
 import '../theme/theme.dart';
+import 'app_components.dart';
 
-/// Weekly payment trend chart.
+/// Payment trend chart — line chart of weekly payments over last N weeks,
+/// with a dashed target line for the expected-per-week amount.
 ///
-/// Shows the last [weeks] weeks of payments as a line chart, with each
-/// data point representing the total paid in that ISO week.
-/// The expected-per-interval line is drawn as a dashed reference.
+/// Uses theme colors throughout:
+///   - chartPaid (green) for the actual paid line
+///   - chartTarget (blue, dashed) for the expected amount
+///   - surfaceContainerHighest for the grid
 class PaymentTrendChart extends StatefulWidget {
   final List<Payment> payments;
   final double expectedPerWeek;
@@ -31,157 +37,171 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
     final weeklyData = _aggregateByWeek(widget.payments, widget.weeks);
     final maxY = _computeMaxY(weeklyData, widget.expectedPerWeek);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Payment Trend',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const Spacer(),
-                _legend(),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Last ${widget.weeks} weeks • total paid per week',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title + legend
+          Row(
+            children: [
+              IconBubble(
+                icon: Icons.show_chart,
+                color: Theme.of(context).colorScheme.primary,
+                size: 32,
+                iconSize: 16,
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 160,
-              child: weeklyData.isEmpty || maxY == 0
-                  ? _emptyChart()
-                  : LineChart(_buildChart(weeklyData, maxY)),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: weeklyData
-                  .map(
-                    (d) => Expanded(
+              const SizedBox(width: AppSpacing.mdSm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment Trend',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    Text(
+                      'Last ${widget.weeks} weeks · total paid per week',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Chart
+          SizedBox(
+            height: 160,
+            child: weeklyData.isEmpty || maxY == 0
+                ? _emptyChart(context)
+                : LineChart(_buildChart(weeklyData, maxY)),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // X-axis labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: weeklyData
+                .map((d) => Expanded(
                       child: Text(
                         d.label,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 10,
-                        ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontSize: 9,
+                            ),
                       ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
-        ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Legend
+          Row(
+            children: [
+              _legendDot(
+                context,
+                color: Theme.of(context)
+                    .extension<LoanTrackerDesignTokens>()!
+                    .chartPaid,
+                label: 'Paid',
+                dashed: false,
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              if (widget.expectedPerWeek > 0)
+                _legendDot(
+                  context,
+                  color: Theme.of(context)
+                      .extension<LoanTrackerDesignTokens>()!
+                      .chartTarget,
+                  label: 'Target',
+                  dashed: true,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _legend() {
+  Widget _legendDot(
+    BuildContext context, {
+    required Color color,
+    required String label,
+    bool dashed = false,
+  }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 10,
-          height: 2,
-          color: AppTheme.primary,
-        ),
-        const SizedBox(width: 4),
+        if (dashed)
+          Row(
+            children: List.generate(
+              3,
+              (_) => Container(
+                width: 4,
+                height: 2,
+                margin: const EdgeInsets.only(right: 2),
+                color: color,
+              ),
+            ),
+          )
+        else
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+        const SizedBox(width: AppSpacing.xs),
         Text(
-          'Paid',
-          style: TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 10,
-          ),
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
         ),
-        const SizedBox(width: 10),
-        if (widget.expectedPerWeek > 0) ...[
-          CustomPaint(
-            size: const Size(10, 2),
-            painter: _DashedLinePainter(
-              color: AppTheme.accent,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'Target',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 10,
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  Widget _emptyChart() {
+  Widget _emptyChart(BuildContext context) {
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.show_chart,
-            color: AppTheme.primary.withOpacity(0.3),
-            size: 40,
+            color: tokens.chartPaid.withOpacity(0.3),
+            size: 36,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'No payments to chart yet',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-            ),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
     );
   }
 
-  LineChartData _buildChart(
-    List<WeekData> data,
-    double maxY,
-  ) {
-    final paidSpots = <FlSpot>[];
+  LineChartData _buildChart(List<WeekData> data, double maxY) {
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
+    final scheme = Theme.of(context).colorScheme;
 
+    final paidSpots = <FlSpot>[];
     for (var i = 0; i < data.length; i++) {
-      paidSpots.add(
-        FlSpot(
-          i.toDouble(),
-          data[i].total,
-        ),
-      );
+      paidSpots.add(FlSpot(i.toDouble(), data[i].total));
     }
 
     final targetSpots = <FlSpot>[];
-
     if (widget.expectedPerWeek > 0) {
       for (var i = 0; i < data.length; i++) {
-        targetSpots.add(
-          FlSpot(
-            i.toDouble(),
-            widget.expectedPerWeek,
-          ),
-        );
+        targetSpots.add(FlSpot(i.toDouble(), widget.expectedPerWeek));
       }
     }
 
@@ -191,75 +211,62 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
         drawVerticalLine: false,
         horizontalInterval: maxY > 0 ? maxY / 4 : 1,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: AppTheme.border.withOpacity(0.5),
-          strokeWidth: 1,
+          color: tokens.chartGrid,
+          strokeWidth: 0.5,
         ),
       ),
-      titlesData: const FlTitlesData(
-        show: false,
-      ),
-      borderData: FlBorderData(
-        show: false,
-      ),
+      titlesData: const FlTitlesData(show: false),
+      borderData: FlBorderData(show: false),
       minY: 0,
       maxY: maxY,
       lineBarsData: [
+        // Target (dashed) line
         if (targetSpots.isNotEmpty)
           LineChartBarData(
             spots: targetSpots,
             isCurved: false,
-            color: AppTheme.accent,
+            color: tokens.chartTarget,
             barWidth: 1.5,
             dashArray: [4, 4],
-            dotData: const FlDotData(
-              show: false,
-            ),
-            belowBarData: BarAreaData(
-              show: false,
-            ),
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: false),
           ),
+        // Actual paid line
         LineChartBarData(
           spots: paidSpots,
           isCurved: true,
           curveSmoothness: 0.35,
-          color: AppTheme.primary,
+          color: tokens.chartPaid,
           barWidth: 2.5,
           dotData: FlDotData(
             show: true,
-            getDotPainter: (
-              spot,
-              percent,
-              barData,
-              index,
-            ) =>
-                FlDotCirclePainter(
-              radius: 3.5,
-              color: AppTheme.primary,
+            getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+              radius: 3,
+              color: scheme.surface,
               strokeWidth: 2,
-              strokeColor: AppTheme.bg,
+              strokeColor: tokens.chartPaid,
             ),
           ),
           belowBarData: BarAreaData(
             show: true,
-            color: AppTheme.primary.withOpacity(0.12),
+            color: tokens.chartPaid.withOpacity(0.12),
           ),
         ),
       ],
       lineTouchData: LineTouchData(
         enabled: true,
         touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (touchedSpot) => AppTheme.surfaceAlt,
+          getTooltipColor: (touchedSpot) => scheme.inverseSurface,
           tooltipRoundedRadius: 8,
           tooltipPadding: const EdgeInsets.all(8),
           getTooltipItems: (touchedSpots) {
             return touchedSpots.map((spot) {
               final idx = spot.spotIndex;
               final weekData = data[idx];
-
               return LineTooltipItem(
                 '${weekData.label}\nKsh ${spot.y.toStringAsFixed(0)}',
                 TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: scheme.onInverseSurface,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -271,74 +278,30 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
     );
   }
 
-  /// Group payments by ISO week, returning last [weeks] weeks oldest-first.
-  List<WeekData> _aggregateByWeek(
-    List<Payment> payments,
-    int weeks,
-  ) {
+  List<WeekData> _aggregateByWeek(List<Payment> payments, int weeks) {
     final now = DateTime.now();
-
-    // Find the Monday of the current week.
-    final monday = now.subtract(
-      Duration(days: now.weekday - 1),
-    );
-
+    final monday = now.subtract(Duration(days: now.weekday - 1));
     final weeksList = <WeekData>[];
-
     for (var i = weeks - 1; i >= 0; i--) {
-      final weekStart = monday.subtract(
-        Duration(days: 7 * i),
-      );
-
-      final weekEnd = weekStart.add(
-        const Duration(days: 7),
-      );
-
+      final weekStart = monday.subtract(Duration(days: 7 * i));
+      final weekEnd = weekStart.add(const Duration(days: 7));
       final total = payments
-          .where(
-            (p) =>
-                !p.paidAt.isBefore(weekStart) &&
-                p.paidAt.isBefore(weekEnd),
-          )
-          .fold<double>(
-            0,
-            (sum, payment) => sum + payment.amount,
-          );
-
-      final label = i == 0
-          ? 'This wk'
-          : DateFormat('d/M').format(weekStart);
-
-      weeksList.add(
-        WeekData(
-          label: label,
-          total: total,
-        ),
-      );
+          .where((p) =>
+              !p.paidAt.isBefore(weekStart) && p.paidAt.isBefore(weekEnd))
+          .fold<double>(0, (s, p) => s + p.amount);
+      final label = i == 0 ? 'This wk' : DateFormat('d/M').format(weekStart);
+      weeksList.add(WeekData(label: label, total: total));
     }
-
     return weeksList;
   }
 
-  double _computeMaxY(
-    List<WeekData> data,
-    double expected,
-  ) {
+  double _computeMaxY(List<WeekData> data, double expected) {
     var maxPaid = 0.0;
-
     for (final d in data) {
-      if (d.total > maxPaid) {
-        maxPaid = d.total;
-      }
+      if (d.total > maxPaid) maxPaid = d.total;
     }
-
     var maxVal = maxPaid > expected ? maxPaid : expected;
-
-    // Round up to nearest 100 for nicer gridlines.
-    if (maxVal <= 0) {
-      return 100;
-    }
-
+    if (maxVal <= 0) return 100;
     final rounded = (maxVal / 100).ceil() * 100;
     return rounded.toDouble();
   }
@@ -347,50 +310,5 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
 class WeekData {
   final String label;
   final double total;
-
-  WeekData({
-    required this.label,
-    required this.total,
-  });
-}
-
-class _DashedLinePainter extends CustomPainter {
-  final Color color;
-
-  _DashedLinePainter({
-    required this.color,
-  });
-
-  @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 3.0;
-    const dashSpace = 2.0;
-
-    var x = 0.0;
-
-    while (x < size.width) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + dashWidth, 0),
-        paint,
-      );
-
-      x += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(
-    covariant _DashedLinePainter oldDelegate,
-  ) {
-    return oldDelegate.color != color;
-  }
+  WeekData({required this.label, required this.total});
 }

@@ -98,7 +98,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
             'Imported $count payment${count == 1 ? '' : 's'}'
             '${skipped > 0 ? '; skipped $skipped already linked to another loan' : ''}',
           ),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
       Navigator.pop(context);
@@ -128,13 +128,13 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: AppTheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.sms_outlined, size: 18, color: AppTheme.accent),
+                    const Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -151,7 +151,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                   Text(
                     'Keyword filter: "$keyword" (case-insensitive)',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -161,7 +161,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                     'No keyword set — showing all M-Pesa messages from last 30 days. '
                     'Set a keyword (e.g. lender name) when editing the loan for tighter filtering.',
                     style: const TextStyle(
-                      color: AppTheme.warning,
+                      color: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
                       fontSize: 12,
                     ),
                   ),
@@ -200,7 +200,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
             const SizedBox(height: 16),
             Text(
               'Scanning SMS inbox...',
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -215,7 +215,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.sms_failed_outlined,
-                  size: 64, color: AppTheme.warning),
+                  size: 64, color: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning),
               const SizedBox(height: 16),
               Text(
                 'SMS permission required',
@@ -226,7 +226,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                 'Loan Tracker needs to read your SMS inbox to find M-Pesa '
                 'confirmation messages. Your data stays on your device.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -250,12 +250,12 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: AppTheme.danger),
+              const Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.danger),
+                style: const TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
@@ -279,7 +279,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
               Icon(
                 Icons.inbox_outlined,
                 size: 64,
-                color: AppTheme.textSecondary.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -291,7 +291,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                 'We scanned the last 30 days of SMS for messages matching your keyword. '
                 'Nothing matched. Try changing the keyword or paste a payment manually.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -302,7 +302,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _detected.length,
-      separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border),
+      separatorBuilder: (_, __) => Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
       itemBuilder: (context, i) {
         final d = _detected[i];
         final selected = _selected.contains(i);
@@ -346,12 +346,12 @@ class _DetectedTile extends StatelessWidget {
           children: [
             // Checkbox
             if (detected.alreadyImported)
-              Icon(Icons.check_circle, color: AppTheme.textSecondary, size: 22)
+              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 22)
             else
               Checkbox(
                 value: selected,
                 onChanged: (_) => onToggle(),
-                activeColor: AppTheme.primary,
+                activeColor: Theme.of(context).colorScheme.primary,
               ),
             const SizedBox(width: 8),
             // Amount + code
@@ -365,8 +365,8 @@ class _DetectedTile extends StatelessWidget {
                         MpesaParser.formatKes(p.amount),
                         style: TextStyle(
                           color: detected.alreadyImported
-                              ? AppTheme.textSecondary
-                              : AppTheme.primary,
+                              ? Theme.of(context).colorScheme.onSurfaceVariant
+                              : Theme.of(context).colorScheme.primary,
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           decoration: detected.alreadyImported
@@ -382,13 +382,13 @@ class _DetectedTile extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.accent.withOpacity(0.15),
+                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             p.mpesaCode!,
                             style: const TextStyle(
-                              color: AppTheme.accent,
+                              color: Theme.of(context).colorScheme.secondary,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'monospace',
@@ -400,7 +400,7 @@ class _DetectedTile extends StatelessWidget {
                             Text(
                               'already in app',
                               style: TextStyle(
-                                color: AppTheme.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 fontSize: 10,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -412,7 +412,7 @@ class _DetectedTile extends StatelessWidget {
                   Text(
                     DateFormat('d MMM y • h:mm a').format(p.paidAt),
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -421,7 +421,7 @@ class _DetectedTile extends StatelessWidget {
                     Text(
                       p.sender!,
                       style: TextStyle(
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                       ),

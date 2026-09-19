@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
 import '../services/mpesa_parser.dart';
+import '../theme/app_tokens.dart';
 import '../theme/theme.dart';
-import 'lender_actions_sheet.dart';
+import 'app_components.dart';
 
-/// Main dashboard card — shows progress ring, balance, days remaining, today status.
+/// Main dashboard — the "hero" loan summary card.
+///
+/// Layout (top to bottom):
+///   1. Borrower name + due date
+///   2. Balance remaining (large amount) + animated progress ring
+///   3. Mini progress bar
+///   4. Today-paid status chip
+///   5. Three metric cards: Paid / Total / Days Left
+///   6. Primary payment action card (Pay Ksh X today)
+///   7. Lender contact chip (if lender info is set)
 class DashboardCard extends StatelessWidget {
   const DashboardCard({super.key});
 
@@ -21,233 +32,268 @@ class DashboardCard extends StatelessWidget {
     final days = loan.daysRemaining;
     final totalPaid = provider.totalPaid;
     final todayPaid = provider.todayPaid;
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ------------------------------------------------------------------
+        // HERO CARD — loan summary with progress ring
+        // ------------------------------------------------------------------
+        AppCard.tinted(
+          tintColor: tokens.brandSurface,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Borrower + due date row
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BORROWER',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          loan.lenderName ?? loan.title,
+                          style: Theme.of(context).textTheme.titleLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        loan.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'DUE',
+                        style: Theme.of(context).textTheme.labelSmall,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
-                        'Due ${DateFormat('d MMM y').format(loan.dueDate)}',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
+                        DateFormat('d MMM y').format(loan.dueDate),
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
                   ),
-                ),
-                _ProgressRing(progress: progress),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _bigStat(
-              'Balance remaining',
-              MpesaParser.formatKes(balance),
-              AppTheme.magenta,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _miniStat(
-                    'Paid',
-                    MpesaParser.formatKes(totalPaid),
-                    AppTheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _miniStat(
-                    'Total',
-                    MpesaParser.formatKes(loan.totalPayable),
-                    AppTheme.accent,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _miniStat(
-                    'Days left',
-                    '$days',
-                    days <= 3 ? AppTheme.danger : AppTheme.warning,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _todayStatus(todayPaid, loan.expectedPerInterval),
-            if (loan.hasLenderContact) ...[
-              const SizedBox(height: 12),
-              _lenderChip(context, loan.lenderName ?? 'Lender'),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _lenderChip(BuildContext context, String name) {
-    return InkWell(
-      onTap: () {
-        final provider = context.read<LoanProvider>();
-        final loan = provider.activeLoan;
-        if (loan != null) {
-          showLenderActionsSheet(context, loan);
-        }
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.person, color: AppTheme.accent, size: 18),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'LENDER',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: AppTheme.accent,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Balance + progress ring
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BALANCE REMAINING',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        // Large financial amount — most prominent thing on screen
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            MpesaParser.formatKes(balance),
+                            style: GoogleFonts.inter(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        // Mini progress bar
+                        TweenAnimationBuilder<double>(
+                          tween: Tween<double>(begin: 0, end: progress),
+                          duration: AppDurations.slow,
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, child) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: value,
+                                minHeight: 6,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                                color: tokens.brandSuccess,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${(progress * 100).toStringAsFixed(0)}% repaid',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: tokens.brandSuccess,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  // Animated progress ring
+                  _ProgressRing(progress: progress),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+
+              // Today status row
+              Row(
+                children: [
+                  StatusChip(
+                    label: todayPaid ? 'PAID TODAY' : 'PENDING TODAY',
+                    variant: todayPaid
+                        ? StatusChipVariant.success
+                        : StatusChipVariant.warning,
+                    icon: todayPaid ? Icons.check_circle : Icons.schedule,
+                  ),
+                  const Spacer(),
+                  if (loan.hasLenderContact)
+                    IconBubble(
+                      icon: Icons.person,
+                      color: Theme.of(context).colorScheme.secondary,
+                      size: 28,
+                      iconSize: 14,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // ------------------------------------------------------------------
+        // METRICS ROW — Paid / Total / Days Left
+        // ------------------------------------------------------------------
+        Row(
+          children: [
+            Expanded(
+              child: MetricCard(
+                label: 'PAID',
+                value: MpesaParser.formatKes(totalPaid),
+                icon: Icons.savings_outlined,
+                tintColor: tokens.successSurface,
+                iconColor: tokens.brandSuccess,
+              ),
             ),
-            const Icon(Icons.chevron_right, color: AppTheme.accent, size: 20),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: MetricCard(
+                label: 'TOTAL',
+                value: MpesaParser.formatKes(loan.totalPayable),
+                icon: Icons.account_balance_wallet_outlined,
+                tintColor: tokens.neutralSurface,
+                iconColor: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: MetricCard(
+                label: 'DAYS LEFT',
+                value: '$days',
+                icon: Icons.event_outlined,
+                tintColor: days <= 3
+                    ? tokens.dangerSurface
+                    : days <= 7
+                        ? tokens.warningSurface
+                        : tokens.neutralSurface,
+                iconColor: days <= 3
+                    ? tokens.danger
+                    : days <= 7
+                        ? tokens.warning
+                        : Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
+        const SizedBox(height: AppSpacing.md),
 
-  Widget _bigStat(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.1,
-          ),
+        // ------------------------------------------------------------------
+        // PAYMENT ACTION CARD — primary CTA
+        // ------------------------------------------------------------------
+        _PaymentActionCard(
+          amount: loan.expectedPerInterval,
+          paid: todayPaid,
         ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 30,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+        const SizedBox(height: AppSpacing.md),
+
+        // Lender contact chip (if set)
+        if (loan.hasLenderContact)
+          _LenderContactChip(
+            name: loan.lenderName ?? 'Lender',
+            phone: loan.lenderPhone,
           ),
-        ),
       ],
     );
   }
+}
 
-  Widget _miniStat(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
+/// Animated circular progress ring with percentage in the center.
+class _ProgressRing extends StatelessWidget {
+  final double progress;
 
-  Widget _todayStatus(bool paid, double expected) {
-    final color = paid ? AppTheme.primary : AppTheme.warning;
-    final icon = paid ? Icons.check_circle : Icons.alarm;
-    final label = paid
-        ? 'Today\'s payment done'
-        : 'Pay Ksh ${expected.toStringAsFixed(0)} today';
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
-      ),
-      child: Row(
+  const _ProgressRing({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
+    final scheme = Theme.of(context).colorScheme;
+    final size = 72.0;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: progress),
+            duration: AppDurations.hero,
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return CircularProgressIndicator(
+                value: value,
+                strokeWidth: 6,
+                strokeCap: StrokeCap.round,
+                color: tokens.brandSuccess,
+                backgroundColor: scheme.surfaceContainerHighest,
+              );
+            },
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: scheme.onSurface,
+                ),
               ),
-            ),
+              Text(
+                'REPAID',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
           ),
         ],
       ),
@@ -255,37 +301,140 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
-class _ProgressRing extends StatelessWidget {
-  final double progress;
-  const _ProgressRing({required this.progress});
+/// Primary payment action card — prominent CTA for "Pay Ksh X today".
+class _PaymentActionCard extends StatelessWidget {
+  final double amount;
+  final bool paid;
+
+  const _PaymentActionCard({required this.amount, required this.paid});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 64,
-      height: 64,
-      child: Stack(
-        alignment: Alignment.center,
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
+    final text = Theme.of(context).textTheme;
+
+    return AppCard.tinted(
+      tintColor: paid ? tokens.successSurface : scheme.primaryContainer,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      onTap: () {
+        // Navigate to M-Pesa paste screen — handled by parent via Hero tap
+      },
+      child: Row(
         children: [
-          CircularProgressIndicator(
-            value: 1,
-            strokeWidth: 5,
-            color: AppTheme.surfaceAlt,
+          IconBubble(
+            icon: paid ? Icons.check_circle : Icons.bolt_outlined,
+            color: paid ? tokens.brandSuccess : scheme.primary,
+            size: 44,
+            iconSize: 22,
           ),
-          CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 5,
-            color: AppTheme.primary,
-            backgroundColor: Colors.transparent,
-          ),
-          Text(
-            '${(progress * 100).toInt()}%',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primary,
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  paid
+                      ? 'Payment done today'
+                      : 'Pay Ksh ${amount.toStringAsFixed(0)} today',
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: paid
+                        ? tokens.onSuccessContainer
+                        : scheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  paid
+                      ? 'Great work — see you tomorrow'
+                      : 'Keep your plan on track',
+                  style: text.bodySmall?.copyWith(
+                    color: paid
+                        ? tokens.onSuccessContainer.withOpacity(0.7)
+                        : scheme.onPrimaryContainer.withOpacity(0.7),
+                  ),
+                ),
+              ],
             ),
           ),
+          Icon(
+            Icons.chevron_right,
+            color: paid
+                ? tokens.onSuccessContainer
+                : scheme.onPrimaryContainer,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lender contact chip — tappable to open lender actions sheet.
+class _LenderContactChip extends StatelessWidget {
+  final String name;
+  final String? phone;
+
+  const _LenderContactChip({required this.name, this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.mdSm,
+      ),
+      onTap: () {
+        // Open lender actions — handled by parent
+      },
+      child: Row(
+        children: [
+          IconBubble(
+            icon: Icons.person_outline,
+            color: scheme.secondary,
+            size: 36,
+            iconSize: 18,
+          ),
+          const SizedBox(width: AppSpacing.mdSm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'LENDER',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          if (phone != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            IconBubble(
+              icon: Icons.phone_outlined,
+              color: scheme.primary,
+              size: 32,
+              iconSize: 16,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            IconBubble(
+              icon: Icons.chat_outlined,
+              color: scheme.primary,
+              size: 32,
+              iconSize: 16,
+            ),
+          ],
         ],
       ),
     );

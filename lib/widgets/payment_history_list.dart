@@ -27,7 +27,7 @@ class PaymentHistoryList extends StatelessWidget {
               Icon(
                 Icons.receipt_long_outlined,
                 size: 64,
-                color: AppTheme.accent.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -37,7 +37,7 @@ class PaymentHistoryList extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Tap "Log Payment" to paste an M-Pesa SMS.',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -55,7 +55,7 @@ class PaymentHistoryList extends StatelessWidget {
       ),
       itemCount: list.length,
       separatorBuilder: (_, __) =>
-          Divider(height: 1, color: AppTheme.border),
+          Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
       itemBuilder: (context, i) {
         final p = list[i];
         return ListTile(
@@ -65,14 +65,14 @@ class PaymentHistoryList extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: (p.source.name == 'mpesa'
-                      ? AppTheme.primary
-                      : AppTheme.accent)
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.secondary)
                   .withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: (p.source.name == 'mpesa'
-                        ? AppTheme.primary
-                        : AppTheme.accent)
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.secondary)
                     .withOpacity(0.5),
               ),
             ),
@@ -81,8 +81,8 @@ class PaymentHistoryList extends StatelessWidget {
                   ? Icons.phone_iphone
                   : Icons.edit,
               color: p.source.name == 'mpesa'
-                  ? AppTheme.primary
-                  : AppTheme.accent,
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.secondary,
               size: 20,
             ),
           ),
@@ -99,7 +99,7 @@ class PaymentHistoryList extends StatelessWidget {
                 '${p.paidAt.hour.toString().padLeft(2, '0')}:'
                 '${p.paidAt.minute.toString().padLeft(2, '0')}',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -108,7 +108,7 @@ class PaymentHistoryList extends StatelessWidget {
                 Text(
                   p.mpesaCode!,
                   style: const TextStyle(
-                    color: AppTheme.accent,
+                    color: Theme.of(context).colorScheme.secondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -138,7 +138,7 @@ class PaymentHistoryList extends StatelessWidget {
                   Text(
                     '${payments.length} total',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),

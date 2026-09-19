@@ -74,9 +74,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.primary,
+                primary: Theme.of(context).colorScheme.primary,
                 onPrimary: const Color(0xFF001100),
-                surface: AppTheme.surface,
+                surface: Theme.of(context).colorScheme.surface,
               ),
         ),
         child: child!,
@@ -94,9 +94,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.primary,
+                primary: Theme.of(context).colorScheme.primary,
                 onPrimary: const Color(0xFF001100),
-                surface: AppTheme.surface,
+                surface: Theme.of(context).colorScheme.surface,
               ),
         ),
         child: child!,
@@ -157,7 +157,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         content: Text(saved
             ? 'Payment saved: Ksh ${amount.toStringAsFixed(2)}'
             : 'This M-Pesa transaction code is already recorded for another loan.'),
-        backgroundColor: saved ? AppTheme.primary : AppTheme.warning,
+        backgroundColor: saved ? Theme.of(context).colorScheme.primary : Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
       ),
     );
     if (saved) Navigator.pop(context);
@@ -282,14 +282,14 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.info_outline,
-                      size: 18, color: AppTheme.accent),
+                      size: 18, color: Theme.of(context).colorScheme.secondary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -297,7 +297,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                           ? 'Some fields were pre-filled from the M-Pesa SMS you pasted. Edit them as needed.'
                           : 'All fields marked with * are required. M-Pesa code is optional — leave it empty for cash payments.',
                       style: TextStyle(
-                        color: AppTheme.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),

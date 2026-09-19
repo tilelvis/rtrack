@@ -13,7 +13,7 @@ import '../theme/theme.dart';
 Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
   await showModalBottomSheet(
     context: context,
-    backgroundColor: AppTheme.surface,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -30,7 +30,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppTheme.border,
+                color: Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -42,11 +42,11 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                 ),
-                child: const Icon(Icons.person, color: AppTheme.accent),
+                child: const Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -65,7 +65,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                       Text(
                         loan.lenderPhone!,
                         style: TextStyle(
-                          color: AppTheme.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -79,7 +79,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
           Text(
             'CONTACT LENDER',
             style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
@@ -119,7 +119,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                   child: _ActionTile(
                     icon: Icons.sms_outlined,
                     label: 'SMS',
-                    color: AppTheme.accent,
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () => _launch(
                       ctx,
                       'sms:${loan.lenderPhone}?body=${Uri.encodeComponent(_prefilledMessage(loan))}',

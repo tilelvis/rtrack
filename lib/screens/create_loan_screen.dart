@@ -52,9 +52,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: AppTheme.primary,
+                primary: Theme.of(context).colorScheme.primary,
                 onPrimary: const Color(0xFF001100),
-                surface: AppTheme.surface,
+                surface: Theme.of(context).colorScheme.surface,
               ),
         ),
         child: child!,
@@ -212,16 +212,16 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.sms_outlined, size: 18, color: AppTheme.accent),
+                      const Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 8),
                       const Text(
                         'SMS Auto-Import Keyword',
@@ -235,7 +235,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                     'word will be matched to this loan. Use the lender\'s name (e.g. '
                     '"JOHN DOE") or phone number. Leave empty to match all M-Pesa messages.',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -255,16 +255,16 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.06),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.contact_phone_outlined, size: 18, color: AppTheme.primary),
+                      const Icon(Icons.contact_phone_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text(
                         'Lender Contact (optional)',
@@ -278,7 +278,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                     'tap to call, WhatsApp, SMS, or email them — and send '
                     'payment receipts / monthly statements directly.',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -381,16 +381,16 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.accent.withOpacity(0.06),
+        color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+        border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.calculate_outlined, size: 18, color: AppTheme.accent),
+              const Icon(Icons.calculate_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
               const SizedBox(width: 8),
               const Text(
                 'Live Calculator',
@@ -401,7 +401,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
           const SizedBox(height: 4),
           Text(
             'Updates as you type. Verify the numbers make sense before saving.',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
           ),
           const SizedBox(height: 12),
           if (!hasInput)
@@ -409,7 +409,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Text(
                 'Enter a principal amount to see the breakdown.',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
               ),
             )
           else ...[
@@ -417,15 +417,15 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             _calcRow(
               'Interest (${interestRate.toStringAsFixed(1)}%)',
               'Ksh ${interest.toStringAsFixed(2)}',
-              valueColor: interest > 0 ? AppTheme.warning : AppTheme.textPrimary,
+              valueColor: interest > 0 ? Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning : Theme.of(context).colorScheme.onSurface,
             ),
             _calcRow(
               'Total payable',
               'Ksh ${totalPayable.toStringAsFixed(2)}',
               isBold: true,
-              valueColor: AppTheme.primary,
+              valueColor: Theme.of(context).colorScheme.primary,
             ),
-            Divider(height: 16, color: AppTheme.border),
+            Divider(height: 16, color: Theme.of(context).colorScheme.outlineVariant),
             if (totalDays > 0) ...[
               _calcRow(
                 'Loan duration',
@@ -434,7 +434,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
               _calcRow(
                 'Cost per day',
                 'Ksh ${perDay.toStringAsFixed(2)}',
-                valueColor: AppTheme.magenta,
+                valueColor: Theme.of(context).colorScheme.secondary,
               ),
             ],
             if (numPayments > 0 && expected > 0) ...[
@@ -447,28 +447,28 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 'Projected total',
                 'Ksh ${projectedTotal.toStringAsFixed(2)}',
                 valueColor: projectedTotal >= totalPayable
-                    ? AppTheme.primary
-                    : AppTheme.danger,
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.error,
               ),
               if (shortfall > 0.01) ...[
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.danger.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.danger.withOpacity(0.4)),
+                    border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.4)),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.warning_amber_rounded,
-                          size: 16, color: AppTheme.danger),
+                          size: 16, color: Theme.of(context).colorScheme.error),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Shortfall of Ksh ${shortfall.toStringAsFixed(2)} — increase the per-interval amount.',
                           style: const TextStyle(
-                            color: AppTheme.danger,
+                            color: Theme.of(context).colorScheme.error,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -482,20 +482,20 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
+                    border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.check_circle_outline,
-                          size: 16, color: AppTheme.primary),
+                          size: 16, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Overpays by Ksh ${(-shortfall).toStringAsFixed(2)} — you\'ll finish early.',
                           style: const TextStyle(
-                            color: AppTheme.primary,
+                            color: Theme.of(context).colorScheme.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -526,7 +526,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
           Text(
             label,
             style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 13,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
             ),
@@ -534,7 +534,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
           Text(
             value,
             style: TextStyle(
-              color: valueColor ?? AppTheme.textPrimary,
+              color: valueColor ?? Theme.of(context).colorScheme.onSurface,
               fontSize: isBold ? 15 : 13,
               fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
             ),

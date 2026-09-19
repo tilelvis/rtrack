@@ -69,7 +69,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
         content: Text(saved
             ? 'Payment saved: Ksh ${p.amount!.toStringAsFixed(2)}'
             : 'This M-Pesa transaction is already recorded for another loan.'),
-        backgroundColor: saved ? AppTheme.primary : AppTheme.warning,
+        backgroundColor: saved ? Theme.of(context).colorScheme.primary : Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
       ),
     );
     if (saved) Navigator.pop(context);
@@ -89,7 +89,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
           const SizedBox(height: 4),
           Text(
             'We will auto-extract amount, code, date and sender.',
-            style: TextStyle(color: AppTheme.textSecondary),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -165,12 +165,12 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.check_circle, color: AppTheme.primary),
+                const Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Parsed',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppTheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                 ),
               ],
@@ -191,13 +191,13 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.danger.withOpacity(0.1),
-                  border: Border.all(color: AppTheme.danger),
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  border: Border.all(color: Theme.of(context).colorScheme.error),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   'Could not parse all fields. Please edit the SMS or enter manually.',
-                  style: TextStyle(color: AppTheme.danger, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
                 ),
               ),
             ],
@@ -215,7 +215,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(width: 16),
           Expanded(

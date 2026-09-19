@@ -29,7 +29,7 @@ class PaymentHistoryList extends StatelessWidget {
               Icon(
                 Icons.receipt_long_outlined,
                 size: 64,
-                color: AppTheme.accent.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -39,7 +39,7 @@ class PaymentHistoryList extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Tap "Log Payment" to paste an M-Pesa SMS.',
-                style: TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -51,7 +51,7 @@ class PaymentHistoryList extends StatelessWidget {
     final listView = ListView.separated(
       padding: EdgeInsets.fromLTRB(16, embedded ? 0 : 16, 16, embedded ? 0 : 96),
       itemCount: list.length,
-      separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border),
+      separatorBuilder: (_, __) => Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
       itemBuilder: (context, i) {
         final p = list[i];
         return _PaymentTile(payment: p, provider: provider);
@@ -75,7 +75,7 @@ class PaymentHistoryList extends StatelessWidget {
                   Text(
                     '${payments.length} total',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
@@ -107,15 +107,15 @@ class _PaymentTile extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: (isMpesa ? AppTheme.primary : AppTheme.accent).withOpacity(0.15),
+          color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withOpacity(0.15),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: (isMpesa ? AppTheme.primary : AppTheme.accent).withOpacity(0.5),
+            color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withOpacity(0.5),
           ),
         ),
         child: Icon(
           isMpesa ? Icons.phone_iphone : Icons.edit,
-          color: isMpesa ? AppTheme.primary : AppTheme.accent,
+          color: isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary,
           size: 20,
         ),
       ),
@@ -129,7 +129,7 @@ class _PaymentTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             DateFormat('d MMM y • h:mm a').format(payment.paidAt),
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
           ),
           if (payment.mpesaCode != null || payment.sender != null) ...[
             const SizedBox(height: 4),
@@ -146,13 +146,13 @@ class _PaymentTile extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
-                    labelStyle: TextStyle(color: AppTheme.accent),
+                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.secondary),
                   ),
                 if (payment.sender != null)
                   Text(
                     payment.sender!,
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                     ),
@@ -166,7 +166,7 @@ class _PaymentTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: AppTheme.accent, size: 20),
+            icon: const Icon(Icons.share_outlined, color: Theme.of(context).colorScheme.secondary, size: 20),
             tooltip: 'Share payment proof',
             onPressed: () async {
               final loan = provider.activeLoan;
@@ -200,20 +200,20 @@ class _PaymentTile extends StatelessWidget {
                 messenger.showSnackBar(
                   SnackBar(
                     content: Text('Failed: $e'),
-                    backgroundColor: AppTheme.danger,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
               }
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: AppTheme.danger, size: 20),
+            icon: const Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
             tooltip: 'Delete payment',
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  backgroundColor: AppTheme.surface,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   title: const Text('Delete payment?'),
                   content: Text(
                     'This will remove Ksh ${payment.amount.toStringAsFixed(2)} from your history.',
@@ -225,7 +225,7 @@ class _PaymentTile extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Delete', style: TextStyle(color: AppTheme.danger)),
+                      child: const Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ],
                 ),
