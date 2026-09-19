@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/pdf_report_service.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_components.dart';
@@ -12,6 +13,7 @@ import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
 import 'manual_payment_screen.dart';
 import 'mpesa_paste_screen.dart';
+import 'payments_screen.dart';
 import 'settings_screen.dart';
 import 'sms_scan_screen.dart';
 
@@ -40,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final screens = [
       _buildHome(provider),
-      const PaymentHistoryList(),
+      const PaymentsScreen(),
       const SettingsScreen(),
     ];
 
@@ -113,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return CustomScrollView(
+      physics: const ClampingScrollPhysics(),
       slivers: [
         // Sticky app bar with logo + actions
         SliverAppBar.large(
@@ -136,6 +139,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           actions: [
+            // Theme toggle — quick cycle through system/light/dark
+            IconButton(
+              icon: Icon(_themeIcon(context)),
+              tooltip: 'Toggle theme',
+              onPressed: () => _cycleTheme(context),
+            ),
             IconButton(
               icon: const Icon(Icons.sms_outlined),
               tooltip: 'Scan SMS for M-Pesa payments',
@@ -264,5 +273,55 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(content: Text('Failed to generate PDF: $e')),
       );
     }
+  }
+
+  /// Show the right icon for the current theme mode.
+  IconData _themeIcon(BuildContext context) {
+    final themeProvider = context.read<ThemeProvider>();
+    switch (themeProvider.mode) {
+      case AppThemeMode.light:
+        return Icons.light_mode_outlined;
+      case AppThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case AppThemeMode.system:
+        return Icons.brightness_auto_outlined;
+    }
+  }
+
+  /// Cycle through theme modes: system → light → dark → system.
+  /// Tapping the icon quickly switches themes without going to Settings.
+  void _cycleTheme(BuildContext context) {
+    final themeProvider = context.read<ThemeProvider>();
+    final AppThemeMode next;
+    switch (themeProvider.mode) {
+      case AppThemeMode.system:
+        next = AppThemeMode.light;
+        break;
+      case AppThemeMode.light:
+        next = AppThemeMode.dark;
+        break;
+      case AppThemeMode.dark:
+        next = AppThemeMode.system;
+        break;
+    }
+    themeProvider.setMode(next);
+
+    // Show a tiny snackbar so the user knows which mode they're now in
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(_themeIcon(context), size: 18),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Theme: ${next.label}'),
+            ],
+          ),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          width: 220,
+        ),
+      );
   }
 }

@@ -161,7 +161,7 @@ class _TransactionTile extends StatelessWidget {
                   if (payment.mpesaCode != null)
                     Text(
                       payment.mpesaCode!,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.jetBrainsMono(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.primary,
@@ -198,7 +198,7 @@ class _TransactionTile extends StatelessWidget {
             // Amount
             Text(
               'Ksh ${payment.amount.toStringAsFixed(0)}',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.jetBrainsMono(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: tokens.brandSuccess,

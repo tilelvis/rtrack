@@ -176,423 +176,476 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<LoanProvider>();
     final themeProvider = context.watch<ThemeProvider>();
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: [
+          // Quick theme toggle in header — same as on home screen
+          PopupMenuButton<AppThemeMode>(
+            icon: Icon(_themeIcon(themeProvider.mode)),
+            tooltip: 'Theme',
+            onSelected: (mode) => themeProvider.setMode(mode),
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: AppThemeMode.system,
+                child: _themeMenuRow(ctx, AppThemeMode.system, themeProvider.mode),
+              ),
+              PopupMenuItem(
+                value: AppThemeMode.light,
+                child: _themeMenuRow(ctx, AppThemeMode.light, themeProvider.mode),
+              ),
+              PopupMenuItem(
+                value: AppThemeMode.dark,
+                child: _themeMenuRow(ctx, AppThemeMode.dark, themeProvider.mode),
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: [
+          // ----------------------------------------------------------------
+          // NOTIFICATIONS — collapsible
+          // ----------------------------------------------------------------
+          _collapsibleSection(
+            icon: Icons.alarm,
+            title: 'Notifications',
+            subtitle: '${_reminderTimes.length} reminder time${_reminderTimes.length == 1 ? '' : 's'}',
+            initiallyExpanded: true,
+            child: _buildNotificationsContent(),
+          ),
+          const SizedBox(height: 12),
+
+          // ----------------------------------------------------------------
+          // LENDER CONTACT — collapsible
+          // ----------------------------------------------------------------
+          _collapsibleSection(
+            icon: Icons.contact_phone_outlined,
+            title: 'Lender Contact',
+            subtitle: provider.activeLoan?.hasLenderContact == true
+                ? provider.activeLoan!.lenderName
+                : 'Not set',
+            initiallyExpanded: false,
+            child: _buildLenderContent(provider),
+          ),
+          const SizedBox(height: 12),
+
+          // ----------------------------------------------------------------
+          // LOAN SETTINGS — collapsible
+          // ----------------------------------------------------------------
+          _collapsibleSection(
+            icon: Icons.account_balance_wallet_outlined,
+            title: 'Loan Settings',
+            subtitle: provider.activeLoan?.title ?? 'No loan',
+            initiallyExpanded: false,
+            child: _buildLoanContent(provider),
+          ),
+          const SizedBox(height: 12),
+
+          // ----------------------------------------------------------------
+          // EXPORT & REPORTS — collapsible
+          // ----------------------------------------------------------------
+          _collapsibleSection(
+            icon: Icons.picture_as_pdf_outlined,
+            title: 'Export & Reports',
+            subtitle: 'PDF reports + monthly statements',
+            initiallyExpanded: false,
+            child: _buildExportContent(provider),
+          ),
+          const SizedBox(height: 12),
+
+          // ----------------------------------------------------------------
+          // ABOUT — collapsible
+          // ----------------------------------------------------------------
+          _collapsibleSection(
+            icon: Icons.info_outline,
+            title: 'About',
+            subtitle: 'v2.0.3+21',
+            initiallyExpanded: false,
+            child: _buildAboutContent(),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  /// A collapsible section with a leading icon + trailing chevron.
+  /// Uses Card + ExpansionTile for Material 3 styling.
+  Widget _collapsibleSection({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget child,
+    bool initiallyExpanded = false,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: ExpansionTile(
+        initiallyExpanded: initiallyExpanded,
+        shape: Border.all(color: Colors.transparent),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: scheme.onPrimaryContainer, size: 18),
+        ),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [child],
+      ),
+    );
+  }
+
+  /// Theme icon for the header.
+  IconData _themeIcon(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.light:
+        return Icons.light_mode_outlined;
+      case AppThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case AppThemeMode.system:
+        return Icons.brightness_auto_outlined;
+    }
+  }
+
+  /// Row inside the theme popup menu.
+  Widget _themeMenuRow(BuildContext ctx, AppThemeMode mode, AppThemeMode current) {
+    final selected = mode == current;
+    return Row(
       children: [
-        _section('Appearance'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.palette_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
-                    SizedBox(width: 8),
-                    Text(
-                      'Theme',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Switch between light and dark. System follows your phone\'s setting.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...AppThemeMode.values.map((mode) {
-                  final selected = themeProvider.mode == mode;
-                  return InkWell(
-                    onTap: () => themeProvider.setMode(mode),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 12),
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                            : Theme.of(context).colorScheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: selected
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.outlineVariant,
-                          width: selected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            mode == AppThemeMode.light
-                                ? Icons.light_mode_outlined
-                                : mode == AppThemeMode.dark
-                                    ? Icons.dark_mode_outlined
-                                    : Icons.brightness_auto_outlined,
-                            size: 20,
-                            color: selected
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              mode.label,
-                              style: TextStyle(
-                                color: selected
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).colorScheme.onSurface,
-                                fontWeight: selected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          if (selected)
-                            Icon(Icons.check_circle,
-                                color: Theme.of(context).colorScheme.primary, size: 20),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-              ],
+        Icon(_themeIcon(mode),
+            size: 18,
+            color: selected
+                ? Theme.of(ctx).colorScheme.primary
+                : Theme.of(ctx).colorScheme.onSurfaceVariant),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            mode.label,
+            style: TextStyle(
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected
+                  ? Theme.of(ctx).colorScheme.primary
+                  : Theme.of(ctx).colorScheme.onSurface,
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        _section('Notifications'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.alarm, color: Theme.of(context).colorScheme.primary, size: 18),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Daily reminder times',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${_reminderTimes.length}/3',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Add multiple reminders (e.g. morning 8 AM + evening 7 PM) '
-                  'so you never forget a payment. Max 3 slots.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ..._reminderTimes.asMap().entries.map((entry) {
-                  final i = entry.key;
-                  final t = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _pickTime(i),
-                            icon: const Icon(Icons.access_time),
-                            label: Text(t.format12()),
-                          ),
-                        ),
-                        if (_reminderTimes.length > 1) ...[
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: Icon(Icons.close, size: 18,
-                                color: Theme.of(context).colorScheme.error),
-                            onPressed: () => _removeReminderSlot(i),
-                            tooltip: 'Remove this reminder',
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }),
-                if (_reminderTimes.length < 3)
-                  OutlinedButton.icon(
-                    onPressed: _addReminderSlot,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add another reminder time'),
-                  ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _savingReminders ? null : _saveReminders,
-                    icon: _savingReminders
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.alarm_on_outlined),
-                    label: const Text('Save reminders'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: _testNotification,
-                  icon: const Icon(Icons.notifications_active_outlined),
-                  label: const Text('Send test notification'),
-                ),
-              ],
-            ),
-          ),
+        if (selected)
+          Icon(Icons.check,
+              size: 18, color: Theme.of(ctx).colorScheme.primary),
+      ],
+    );
+  }
+
+  // ----- Section content builders -----
+  // (extracted from the original build method so they can live inside
+  //  collapsible sections)
+
+  Widget _buildNotificationsContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Daily reminder times',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
         ),
-        const SizedBox(height: 24),
-        _section('Lender Contact'),
-        if (provider.activeLoan?.hasLenderContact ?? false)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
-                        ),
-                        child: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              provider.activeLoan!.lenderName ?? 'Lender',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            if (provider.activeLoan!.lenderPhone != null)
-                              Text(
-                                provider.activeLoan!.lenderPhone!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            if (provider.activeLoan!.lenderEmail != null)
-                              Text(
-                                provider.activeLoan!.lenderEmail!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => showLenderActionsSheet(
-                        context,
-                        provider.activeLoan!,
-                      ),
-                      icon: const Icon(Icons.contact_phone_outlined),
-                      label: const Text('Call / WhatsApp / SMS / Email'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          Card(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'No lender contact saved. Edit your loan to add the lender\'s '
-                'name, phone, and email for one-tap call/WhatsApp/email.',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-              ),
-            ),
-          ),
-        const SizedBox(height: 24),
-        _section('Export & Reports'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 4),
+        Text(
+          'Add multiple reminders (e.g. morning 8 AM + evening 7 PM) '
+          'so you never forget a payment. Max 3 slots.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        ..._reminderTimes.asMap().entries.map((entry) {
+          final i = entry.key;
+          final t = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
               children: [
-                const Text(
-                  'Full PDF Report',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'All transactions, totals, M-Pesa codes, dates — shareable PDF.',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: provider.activeLoan == null
-                        ? null
-                        : () => _exportPdf(provider),
-                    icon: const Icon(Icons.picture_as_pdf_outlined),
-                    label: const Text('Generate Full PDF Report'),
-                  ),
-                ),
-                Divider(height: 28, color: Theme.of(context).colorScheme.outlineVariant),
-                const Text(
-                  'Monthly Statement',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Statement for a single month — perfect to email to your lender '
-                  'as proof of payments made that month.',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
+                Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: provider.activeLoan == null
-                        ? null
-                        : _generateMonthlyStatement,
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    label: const Text('Generate Monthly Statement'),
+                    onPressed: () => _pickTime(i),
+                    icon: const Icon(Icons.access_time),
+                    label: Text(t.format12()),
                   ),
                 ),
+                if (_reminderTimes.length > 1) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.close,
+                        size: 18, color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _removeReminderSlot(i),
+                    tooltip: 'Remove this reminder',
+                  ),
+                ],
               ],
             ),
+          );
+        }),
+        if (_reminderTimes.length < 3)
+          OutlinedButton.icon(
+            onPressed: _addReminderSlot,
+            icon: const Icon(Icons.add),
+            label: const Text('Add another reminder time'),
+          ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _savingReminders ? null : _saveReminders,
+            icon: _savingReminders
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.alarm_on_outlined),
+            label: const Text('Save reminders'),
           ),
         ),
-        const SizedBox(height: 24),
-        _section('Loan'),
-        if (provider.activeLoan != null)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _testNotification,
+          icon: const Icon(Icons.notifications_active_outlined),
+          label: const Text('Send test notification'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLenderContent(LoanProvider provider) {
+    final loan = provider.activeLoan;
+    if (loan == null || !loan.hasLenderContact) {
+      return Column(
+        children: [
+          Text(
+            'No lender contact saved.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Edit your loan to add the lender\'s name, phone, and email for one-tap call/WhatsApp/email.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.person,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    provider.activeLoan!.title,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Principal: Ksh ${provider.activeLoan!.principal.toStringAsFixed(2)}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                  ),
-                  Text(
-                    'Due: ${provider.activeLoan!.dueDate.day}/${provider.activeLoan!.dueDate.month}/${provider.activeLoan!.dueDate.year}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                  ),
-                  if (provider.activeLoan!.keyword != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'SMS keyword: "${provider.activeLoan!.keyword}"',
-                      style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: Theme.of(context).colorScheme.surface,
-                          title: const Text('Delete this loan?'),
-                          content: const Text(
-                            'This will delete all associated payments as well. This cannot be undone.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                            ),
-                          ],
+                    loan.lenderName ?? 'Lender',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                      );
-                      if (confirmed == true) {
-                        await provider.deleteLoan(provider.activeLoan!.id);
-                        await NotificationService().cancelAll();
-                      }
-                    },
-                    icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
-                    label: Text('Delete loan', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ),
+                  if (loan.lenderPhone != null)
+                    Text(
+                      loan.lenderPhone!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (loan.lenderEmail != null)
+                    Text(
+                      loan.lenderEmail!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                 ],
               ),
             ),
-          )
-        else
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No active loan. Create one from the Home screen.',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: () => showLenderActionsSheet(context, loan),
+            icon: const Icon(Icons.contact_phone_outlined),
+            label: const Text('Call / WhatsApp / SMS / Email'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoanContent(LoanProvider provider) {
+    final loan = provider.activeLoan;
+    if (loan == null) {
+      return Text(
+        'No active loan. Create one from the Home screen.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          loan.title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Principal: Ksh ${loan.principal.toStringAsFixed(2)}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        Text(
+          'Due: ${loan.dueDate.day}/${loan.dueDate.month}/${loan.dueDate.year}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        if (loan.keyword != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            'SMS keyword: "${loan.keyword}"',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
           ),
-        const SizedBox(height: 24),
-        _section('About'),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Loan Tracker',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+        ],
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () async {
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Delete this loan?'),
+                content: const Text(
+                  'This will delete all associated payments as well. This cannot be undone.',
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Version 1.3.0 • Build 4',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'A personal loan tracker with M-Pesa SMS auto-import, '
-                  'PDF reports, payment receipts, monthly statements, '
-                  'home-screen widget, lender contact, and multiple daily reminders. '
-                  'Built with Flutter & Material 3.',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                ),
-              ],
-            ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Delete',
+                        style: TextStyle(
+                            color: Color(0xFFFF3B3B))),
+                  ),
+                ],
+              ),
+            );
+            if (confirmed == true) {
+              await provider.deleteLoan(loan.id);
+              await NotificationService().cancelAll();
+            }
+          },
+          icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+          label: Text('Delete loan',
+              style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExportContent(LoanProvider provider) {
+    final loan = provider.activeLoan;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Full PDF Report',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'All transactions, totals, M-Pesa codes, dates — shareable PDF.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: loan == null ? null : () => _exportPdf(provider),
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            label: const Text('Generate Full PDF Report'),
           ),
+        ),
+        const Divider(height: 28),
+        Text(
+          'Monthly Statement',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Statement for a single month — perfect to email to your lender as proof of payments made that month.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: loan == null ? null : _generateMonthlyStatement,
+            icon: const Icon(Icons.calendar_month_outlined),
+            label: const Text('Generate Monthly Statement'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAboutContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Loan Tracker',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Version 2.0.3+21',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'A personal loan tracker with M-Pesa SMS auto-import, '
+          'PDF reports, payment receipts, monthly statements, '
+          'lender contact, home-screen widget, and payment trend chart. '
+          'Built with Flutter & Material 3.',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
     );
@@ -642,20 +695,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
-  }
-
-  Widget _section(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.secondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
   }
 }
