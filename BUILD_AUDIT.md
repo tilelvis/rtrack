@@ -1,7 +1,7 @@
 # BUILD AUDIT — loan_tracker / rtrack
 
 > **Read this FIRST before touching any build, gradle, or workflow file.**
-> Last verified working: 2026-09-18 (v1.8.0+14)
+> Last verified working: 2026-09-18 (v1.9.0+16)
 
 This document captures the complete audit that produced a working release
 APK build. It exists so future agents (human or AI) don't repeat the
@@ -383,7 +383,7 @@ flutter --version                    # should show Flutter 3.47.4
 
 ---
 
-## 9. CHANGELOG OF AUDIT FIXES (v1.8.0+14)
+## 9. CHANGELOG OF AUDIT FIXES (v1.9.0+16)
 
 | Version | Change |
 |---------|--------|
@@ -401,6 +401,8 @@ flutter --version                    # should show Flutter 3.47.4
 | v1.7.1+12 | Removed discontinued `workmanager` 0.5.2 (unused, used removed Flutter v1 API) |
 | v1.7.2+13 | **Speculative audit**: enabled core library desugaring, multidex, META-INF excludes — **BUILD SUCCEEDED** |
 | v1.8.0+14 | **Persistent signing keystore**: committed `loan-tracker-release.keystore` + `key.properties` so consecutive builds share the same certificate (enables in-place updates without uninstall) |
+| v1.8.1+15 | Manual payment entry screen (was broken — `/manual` route didn't exist) |
+| v1.9.0+16 | **Light mode toggle**: 3-mode ThemeProvider (system/light/dark) with persistence. **Streak tracker**: gamified consecutive-days counter on dashboard. **Loan calculator**: real-time interest + per-day breakdown on Create Loan screen |
 
 ---
 

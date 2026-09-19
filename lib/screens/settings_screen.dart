@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/notification_service.dart';
 import '../services/pdf_report_service.dart';
 import '../theme/theme.dart';
@@ -174,9 +175,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<LoanProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        _section('Appearance'),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.palette_outlined, size: 18, color: AppTheme.accent),
+                    SizedBox(width: 8),
+                    Text(
+                      'Theme',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Switch between light and dark. System follows your phone\'s setting.',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...ThemeMode.values.map((mode) {
+                  final selected = themeProvider.mode == mode;
+                  return InkWell(
+                    onTap: () => themeProvider.setMode(mode),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 12),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? AppTheme.primary.withOpacity(0.1)
+                            : AppTheme.surfaceAlt,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selected
+                              ? AppTheme.primary
+                              : AppTheme.border,
+                          width: selected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            mode == ThemeMode.light
+                                ? Icons.light_mode_outlined
+                                : mode == ThemeMode.dark
+                                    ? Icons.dark_mode_outlined
+                                    : Icons.brightness_auto_outlined,
+                            size: 20,
+                            color: selected
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              mode.label,
+                              style: TextStyle(
+                                color: selected
+                                    ? AppTheme.primary
+                                    : AppTheme.textPrimary,
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (selected)
+                            const Icon(Icons.check_circle,
+                                color: AppTheme.primary, size: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
         _section('Notifications'),
         Card(
           child: Padding(

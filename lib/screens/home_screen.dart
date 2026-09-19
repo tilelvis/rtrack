@@ -6,6 +6,7 @@ import '../theme/theme.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/payment_history_list.dart';
 import '../widgets/payment_trend_chart.dart';
+import '../widgets/streak_tracker_card.dart';
 import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
 import 'manual_payment_screen.dart';
@@ -203,6 +204,8 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
         const DashboardCard(),
+        const SizedBox(height: 16),
+        const StreakTrackerCard(),
         const SizedBox(height: 16),
         PaymentTrendChart(
           payments: provider.recentPayments,

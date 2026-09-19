@@ -133,6 +133,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 labelText: 'Principal amount (Ksh)',
                 prefixText: 'Ksh ',
               ),
+              onChanged: (_) => setState(() {}),
               validator: (v) {
                 final n = double.tryParse(v ?? '');
                 if (n == null || n <= 0) return 'Enter a valid amount';
@@ -147,6 +148,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 labelText: 'Interest rate (%)',
                 suffixText: '%',
               ),
+              onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -156,12 +158,16 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 labelText: 'Expected per interval (Ksh)',
                 prefixText: 'Ksh ',
               ),
+              onChanged: (_) => setState(() {}),
               validator: (v) {
                 final n = double.tryParse(v ?? '');
                 if (n == null || n <= 0) return 'Enter a valid amount';
                 return null;
               },
             ),
+            const SizedBox(height: 16),
+            // ----- Loan calculator (real-time breakdown) -----
+            _loanCalculatorCard(),
             const SizedBox(height: 20),
             _dateRow('Start date', _startDate, () => _pickDate(context, true)),
             const SizedBox(height: 12),
@@ -190,6 +196,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Custom interval (days)',
                 ),
+                onChanged: (_) => setState(() {}),
               ),
             ],
             const SizedBox(height: 12),
@@ -330,6 +337,209 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
           suffixIcon: const Icon(Icons.calendar_today, size: 18),
         ),
         child: Text(text),
+      ),
+    );
+  }
+
+  /// Real-time loan calculator card — updates as the user types the
+  /// principal, interest rate, expected amount, and dates. Shows the
+  /// total interest, total payable, per-day cost, and how many payments
+  /// will be required.
+  Widget _loanCalculatorCard() {
+    final principal = double.tryParse(_principalCtrl.text) ?? 0;
+    final interestRate = double.tryParse(_interestCtrl.text) ?? 0;
+    final expected = double.tryParse(_expectedCtrl.text) ?? 0;
+
+    final interest = principal * interestRate / 100;
+    final totalPayable = principal + interest;
+
+    // Days between start and due date
+    int totalDays = 0;
+    if (_startDate != null && _dueDate != null) {
+      totalDays = _dueDate!.difference(_startDate!).inDays + 1;
+      if (totalDays < 0) totalDays = 0;
+    }
+
+    final perDay = totalDays > 0 ? totalPayable / totalDays : 0.0;
+
+    // Number of payments required (based on interval)
+    int intervalDays = 7;
+    if (_interval == PaymentInterval.custom) {
+      intervalDays = int.tryParse(_customDaysCtrl.text) ?? 7;
+      if (intervalDays <= 0) intervalDays = 7;
+    }
+    final numPayments = intervalDays > 0 && totalDays > 0
+        ? (totalDays / intervalDays).ceil()
+        : 0;
+
+    // Whether expected amount × numPayments covers the loan
+    final projectedTotal = expected * numPayments;
+    final shortfall = totalPayable - projectedTotal;
+
+    final hasInput = principal > 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.accent.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.calculate_outlined, size: 18, color: AppTheme.accent),
+              const SizedBox(width: 8),
+              const Text(
+                'Live Calculator',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Updates as you type. Verify the numbers make sense before saving.',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          if (!hasInput)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Enter a principal amount to see the breakdown.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              ),
+            )
+          else ...[
+            _calcRow('Principal', 'Ksh ${principal.toStringAsFixed(2)}'),
+            _calcRow(
+              'Interest (${interestRate.toStringAsFixed(1)}%)',
+              'Ksh ${interest.toStringAsFixed(2)}',
+              valueColor: interest > 0 ? AppTheme.warning : AppTheme.textPrimary,
+            ),
+            _calcRow(
+              'Total payable',
+              'Ksh ${totalPayable.toStringAsFixed(2)}',
+              isBold: true,
+              valueColor: AppTheme.primary,
+            ),
+            const Divider(height: 16, color: AppTheme.border),
+            if (totalDays > 0) ...[
+              _calcRow(
+                'Loan duration',
+                '$totalDays day${totalDays == 1 ? '' : 's'}',
+              ),
+              _calcRow(
+                'Cost per day',
+                'Ksh ${perDay.toStringAsFixed(2)}',
+                valueColor: AppTheme.magenta,
+              ),
+            ],
+            if (numPayments > 0 && expected > 0) ...[
+              const SizedBox(height: 8),
+              _calcRow(
+                'Payments required',
+                '$numPayments × Ksh ${expected.toStringAsFixed(0)}',
+              ),
+              _calcRow(
+                'Projected total',
+                'Ksh ${projectedTotal.toStringAsFixed(2)}',
+                valueColor: projectedTotal >= totalPayable
+                    ? AppTheme.primary
+                    : AppTheme.danger,
+              ),
+              if (shortfall > 0.01) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.danger.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded,
+                          size: 16, color: AppTheme.danger),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Shortfall of Ksh ${shortfall.toStringAsFixed(2)} — increase the per-interval amount.',
+                          style: const TextStyle(
+                            color: AppTheme.danger,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (shortfall < -0.01) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline,
+                          size: 16, color: AppTheme.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Overpays by Ksh ${(-shortfall).toStringAsFixed(2)} — you\'ll finish early.',
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _calcRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? valueColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 13,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? AppTheme.textPrimary,
+              fontSize: isBold ? 15 : 13,
+              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
