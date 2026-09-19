@@ -224,7 +224,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.contact_phone_outlined,
             title: 'Lender Contact',
             subtitle: provider.activeLoan?.hasLenderContact == true
-                ? provider.activeLoan!.lenderName
+                ? (provider.activeLoan!.lenderName ?? 'Lender')
                 : 'Not set',
             initiallyExpanded: false,
             child: _buildLenderContent(provider),
