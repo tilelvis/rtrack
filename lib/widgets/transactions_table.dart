@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/payment.dart';
 import '../providers/loan_provider.dart';
@@ -161,7 +160,7 @@ class _TransactionTile extends StatelessWidget {
                   if (payment.mpesaCode != null)
                     Text(
                       payment.mpesaCode!,
-                      style: GoogleFonts.jetBrainsMono(
+                      style: TextStyle(fontFamily: "JetBrainsMono", 
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Theme.of(context).colorScheme.primary,
@@ -198,7 +197,7 @@ class _TransactionTile extends StatelessWidget {
             // Amount
             Text(
               'Ksh ${payment.amount.toStringAsFixed(0)}',
-              style: GoogleFonts.jetBrainsMono(
+              style: TextStyle(fontFamily: "JetBrainsMono", 
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
                 color: tokens.brandSuccess,

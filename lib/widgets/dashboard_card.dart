@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
@@ -78,7 +77,7 @@ class DashboardCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         DateFormat('d MMM y').format(loan.dueDate),
-                        style: GoogleFonts.jetBrainsMono(
+                        style: TextStyle(fontFamily: "JetBrainsMono", 
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -109,7 +108,7 @@ class DashboardCard extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             MpesaParser.formatKes(balance),
-                            style: GoogleFonts.jetBrainsMono(
+                            style: TextStyle(fontFamily: "JetBrainsMono", 
                               fontSize: 36,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.5,
@@ -283,7 +282,7 @@ class _ProgressRing extends StatelessWidget {
             children: [
               Text(
                 '${(progress * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.jetBrainsMono(
+                style: TextStyle(fontFamily: "JetBrainsMono", 
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: scheme.onSurface,

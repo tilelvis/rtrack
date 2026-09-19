@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Material 3 design system for LoanTracker.
 ///
@@ -178,79 +177,81 @@ class AppTheme {
       // a distinctive technical/fintech identity with tabular figures that
       // align nicely in financial displays).
       // Inter remains for body text (better paragraph readability).
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
-        displayLarge: GoogleFonts.jetBrainsMono(
+      // Both fonts are bundled in assets/fonts/ (declared in pubspec.yaml)
+      // so they work OFFLINE without depending on google_fonts runtime fetch.
+      textTheme: base.textTheme.copyWith(
+        displayLarge: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 36,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.5,
           color: colorScheme.onSurface,
         ),
-        displayMedium: GoogleFonts.jetBrainsMono(
+        displayMedium: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 28,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.25,
           color: colorScheme.onSurface,
         ),
-        displaySmall: GoogleFonts.jetBrainsMono(
+        displaySmall: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 24,
           fontWeight: FontWeight.w700,
           letterSpacing: 0,
           color: colorScheme.onSurface,
         ),
-        headlineMedium: GoogleFonts.jetBrainsMono(
+        headlineMedium: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 20,
           fontWeight: FontWeight.w700,
           letterSpacing: 0,
           color: colorScheme.onSurface,
         ),
-        headlineSmall: GoogleFonts.jetBrainsMono(
+        headlineSmall: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
         ),
-        titleLarge: GoogleFonts.jetBrainsMono(
+        titleLarge: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
         ),
-        titleMedium: GoogleFonts.jetBrainsMono(
+        titleMedium: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: colorScheme.onSurface,
         ),
-        titleSmall: GoogleFonts.jetBrainsMono(
+        titleSmall: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: colorScheme.onSurface,
         ),
-        bodyLarge: GoogleFonts.jetBrainsMono(
+        bodyLarge: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 15,
           fontWeight: FontWeight.w400,
           color: colorScheme.onSurface,
         ),
-        bodyMedium: GoogleFonts.jetBrainsMono(
+        bodyMedium: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 13,
           fontWeight: FontWeight.w400,
           color: colorScheme.onSurfaceVariant,
         ),
-        bodySmall: GoogleFonts.jetBrainsMono(
+        bodySmall: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: colorScheme.onSurfaceVariant,
         ),
-        labelLarge: GoogleFonts.jetBrainsMono(
+        labelLarge: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 13,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
           color: colorScheme.onSurface,
         ),
-        labelMedium: GoogleFonts.jetBrainsMono(
+        labelMedium: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
           color: colorScheme.onSurfaceVariant,
         ),
-        labelSmall: GoogleFonts.jetBrainsMono(
+        labelSmall: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.0,
@@ -266,7 +267,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.jetBrainsMono(
+        titleTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
@@ -320,7 +321,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.jetBrainsMono(
+          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
             fontWeight: FontWeight.w700,
             fontSize: 15,
           ),
@@ -336,7 +337,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.jetBrainsMono(
+          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
             fontWeight: FontWeight.w700,
             fontSize: 15,
           ),
@@ -351,7 +352,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: GoogleFonts.jetBrainsMono(
+          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
@@ -360,7 +361,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          textStyle: GoogleFonts.jetBrainsMono(
+          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
@@ -375,7 +376,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
         ),
-        extendedTextStyle: GoogleFonts.jetBrainsMono(
+        extendedTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
           fontWeight: FontWeight.w700,
           fontSize: 14,
         ),
@@ -401,7 +402,7 @@ class AppTheme {
         indicatorColor: colorScheme.primaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return GoogleFonts.jetBrainsMono(
+          return TextStyle(fontFamily: "JetBrainsMono", 
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: selected
@@ -452,12 +453,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
         ),
-        titleTextStyle: GoogleFonts.jetBrainsMono(
+        titleTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: colorScheme.onSurface,
         ),
-        contentTextStyle: GoogleFonts.jetBrainsMono(
+        contentTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
           fontSize: 14,
           color: colorScheme.onSurfaceVariant,
         ),
