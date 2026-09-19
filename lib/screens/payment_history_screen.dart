@@ -166,7 +166,7 @@ class _PaymentTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: Theme.of(context).colorScheme.secondary, size: 20),
+            icon: Icon(Icons.share_outlined, color: Theme.of(context).colorScheme.secondary, size: 20),
             tooltip: 'Share payment proof',
             onPressed: () async {
               final loan = provider.activeLoan;
@@ -207,7 +207,7 @@ class _PaymentTile extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
+            icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error, size: 20),
             tooltip: 'Delete payment',
             onPressed: () async {
               final confirmed = await showDialog<bool>(
@@ -225,7 +225,7 @@ class _PaymentTile extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
                   ],
                 ),

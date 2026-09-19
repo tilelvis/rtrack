@@ -46,7 +46,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                 ),
-                child: const Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
+                child: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
               ),
               const SizedBox(width: 12),
               Expanded(

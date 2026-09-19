@@ -134,7 +134,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
+                    Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -160,7 +160,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                   Text(
                     'No keyword set — showing all M-Pesa messages from last 30 days. '
                     'Set a keyword (e.g. lender name) when editing the loan for tighter filtering.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
                       fontSize: 12,
                     ),
@@ -214,7 +214,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.sms_failed_outlined,
+              Icon(Icons.sms_failed_outlined,
                   size: 64, color: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning),
               const SizedBox(height: 16),
               Text(
@@ -250,12 +250,12 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
+              Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Theme.of(context).colorScheme.error),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
@@ -387,7 +387,7 @@ class _DetectedTile extends StatelessWidget {
                           ),
                           child: Text(
                             p.mpesaCode!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Theme.of(context).colorScheme.secondary,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,

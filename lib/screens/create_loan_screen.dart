@@ -221,7 +221,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
+                      Icon(Icons.sms_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                       const SizedBox(width: 8),
                       const Text(
                         'SMS Auto-Import Keyword',
@@ -264,7 +264,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.contact_phone_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.contact_phone_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text(
                         'Lender Contact (optional)',
@@ -390,7 +390,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.calculate_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
+              Icon(Icons.calculate_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
               const SizedBox(width: 8),
               const Text(
                 'Live Calculator',
@@ -461,13 +461,13 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
+                      Icon(Icons.warning_amber_rounded,
                           size: 16, color: Theme.of(context).colorScheme.error),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Shortfall of Ksh ${shortfall.toStringAsFixed(2)} — increase the per-interval amount.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -488,13 +488,13 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_outline,
+                      Icon(Icons.check_circle_outline,
                           size: 16, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Overpays by Ksh ${(-shortfall).toStringAsFixed(2)} — you\'ll finish early.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

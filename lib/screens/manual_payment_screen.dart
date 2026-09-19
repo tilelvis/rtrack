@@ -288,7 +288,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline,
+                  Icon(Icons.info_outline,
                       size: 18, color: Theme.of(context).colorScheme.secondary),
                   const SizedBox(width: 10),
                   Expanded(

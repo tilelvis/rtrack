@@ -280,7 +280,6 @@ class AppTheme {
           side: BorderSide(color: colorScheme.outlineVariant, width: 0.5),
         ),
       ),
-      cardElevation: 0,
 
       // ---- Inputs ----
       inputDecorationTheme: InputDecorationTheme(

@@ -165,7 +165,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Parsed',
@@ -195,7 +195,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
                   border: Border.all(color: Theme.of(context).colorScheme.error),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   'Could not parse all fields. Please edit the SMS or enter manually.',
                   style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13),
                 ),

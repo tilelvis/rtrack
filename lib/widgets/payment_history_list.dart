@@ -107,7 +107,7 @@ class PaymentHistoryList extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   p.mpesaCode!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Theme.of(context).colorScheme.secondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _addReminderSlot() async {
     if (_reminderTimes.length >= 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Maximum 3 reminder times supported.'),
           backgroundColor: Theme.of(context).extension<LoanTrackerDesignTokens>()!.warning,
         ),
@@ -156,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Statement ready — share or save it.'),
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(Icons.palette_outlined, size: 18, color: Theme.of(context).colorScheme.secondary),
                     SizedBox(width: 8),
@@ -254,7 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           if (selected)
-                            const Icon(Icons.check_circle,
+                            Icon(Icons.check_circle,
                                 color: Theme.of(context).colorScheme.primary, size: 20),
                         ],
                       ),
@@ -275,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.alarm, color: Theme.of(context).colorScheme.primary, size: 18),
+                    Icon(Icons.alarm, color: Theme.of(context).colorScheme.primary, size: 18),
                     const SizedBox(width: 8),
                     const Text(
                       'Daily reminder times',
@@ -318,7 +318,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         if (_reminderTimes.length > 1) ...[
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(Icons.close, size: 18,
+                            icon: Icon(Icons.close, size: 18,
                                 color: Theme.of(context).colorScheme.error),
                             onPressed: () => _removeReminderSlot(i),
                             tooltip: 'Remove this reminder',
@@ -378,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
                         ),
-                        child: const Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
+                        child: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -517,7 +517,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'SMS keyword: "${provider.activeLoan!.keyword}"',
-                      style: const TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12),
+                      style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontSize: 12),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -538,7 +538,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                              child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                             ),
                           ],
                         ),
@@ -548,8 +548,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await NotificationService().cancelAll();
                       }
                     },
-                    icon: const Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
-                    label: const Text('Delete loan', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                    label: Text('Delete loan', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ),
                 ],
               ),
@@ -628,7 +628,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('PDF report ready — share or save it.'),
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
@@ -649,7 +649,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: Theme.of(context).colorScheme.secondary,
           fontSize: 12,
           fontWeight: FontWeight.w700,
