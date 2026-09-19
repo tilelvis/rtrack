@@ -2,40 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Mode selector for the app theme.
-enum ThemeMode { system, light, dark }
+///
+/// Renamed from `ThemeMode` to `AppThemeMode` to avoid clashing with
+/// Flutter's own `ThemeMode` enum (which is what MaterialApp.themeMode
+/// expects). We convert between the two in main.dart.
+enum AppThemeMode { system, light, dark }
 
-extension ThemeModeLabel on ThemeMode {
+extension AppThemeModeLabel on AppThemeMode {
   String get label {
     switch (this) {
-      case ThemeMode.system:
+      case AppThemeMode.system:
         return 'System default';
-      case ThemeMode.light:
+      case AppThemeMode.light:
         return 'Light';
-      case ThemeMode.dark:
+      case AppThemeMode.dark:
         return 'Dark';
     }
   }
 
   String get prefKey {
     switch (this) {
-      case ThemeMode.system:
+      case AppThemeMode.system:
         return 'system';
-      case ThemeMode.light:
+      case AppThemeMode.light:
         return 'light';
-      case ThemeMode.dark:
+      case AppThemeMode.dark:
         return 'dark';
     }
   }
 
-  static ThemeMode fromPrefKey(String? key) {
+  static AppThemeMode fromPrefKey(String? key) {
     switch (key) {
       case 'light':
-        return ThemeMode.light;
+        return AppThemeMode.light;
       case 'dark':
-        return ThemeMode.dark;
+        return AppThemeMode.dark;
       case 'system':
       default:
-        return ThemeMode.system;
+        return AppThemeMode.system;
     }
   }
 }
@@ -45,28 +49,28 @@ extension ThemeModeLabel on ThemeMode {
 class ThemeProvider extends ChangeNotifier {
   static const _prefKey = 'app_theme_mode';
 
-  ThemeMode _mode = ThemeMode.system;
-  ThemeMode get mode => _mode;
+  AppThemeMode _mode = AppThemeMode.system;
+  AppThemeMode get mode => _mode;
 
   /// The effective brightness — resolves `system` against the platform.
   Brightness brightnessFor(BuildContext context) {
     switch (_mode) {
-      case ThemeMode.light:
+      case AppThemeMode.light:
         return Brightness.light;
-      case ThemeMode.dark:
+      case AppThemeMode.dark:
         return Brightness.dark;
-      case ThemeMode.system:
+      case AppThemeMode.system:
         return MediaQuery.platformBrightnessOf(context);
     }
   }
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
-    _mode = ThemeModeLabel.fromPrefKey(prefs.getString(_prefKey));
+    _mode = AppThemeModeLabel.fromPrefKey(prefs.getString(_prefKey));
     notifyListeners();
   }
 
-  Future<void> setMode(ThemeMode mode) async {
+  Future<void> setMode(AppThemeMode mode) async {
     if (_mode == mode) return;
     _mode = mode;
     notifyListeners();

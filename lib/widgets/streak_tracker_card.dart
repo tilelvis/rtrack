@@ -81,7 +81,7 @@ class StreakTrackerCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         'day${currentStreak == 1 ? '' : 's'} streak',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -92,7 +92,7 @@ class StreakTrackerCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     _motivationalMessage(currentStreak, longestStreak),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 12,
                     ),

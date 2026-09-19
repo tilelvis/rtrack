@@ -61,7 +61,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
             const SizedBox(height: 4),
             Text(
               'Last ${widget.weeks} weeks • total paid per week',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 11,
               ),
@@ -82,7 +82,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
                       child: Text(
                         d.label,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 10,
                         ),
@@ -106,7 +106,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
           color: AppTheme.primary,
         ),
         const SizedBox(width: 4),
-        const Text(
+        Text(
           'Paid',
           style: TextStyle(
             color: AppTheme.textSecondary,
@@ -122,7 +122,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
             ),
           ),
           const SizedBox(width: 4),
-          const Text(
+          Text(
             'Target',
             style: TextStyle(
               color: AppTheme.textSecondary,
@@ -145,7 +145,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
             size: 40,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'No payments to chart yet',
             style: TextStyle(
               color: AppTheme.textSecondary,
@@ -258,7 +258,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
 
               return LineTooltipItem(
                 '${weekData.label}\nKsh ${spot.y.toStringAsFixed(0)}',
-                const TextStyle(
+                TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

@@ -150,7 +150,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                   const SizedBox(height: 4),
                   Text(
                     'Keyword filter: "$keyword" (case-insensitive)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 12,
                     ),
@@ -222,7 +222,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Loan Tracker needs to read your SMS inbox to find M-Pesa '
                 'confirmation messages. Your data stays on your device.',
                 textAlign: TextAlign.center,
@@ -287,7 +287,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'We scanned the last 30 days of SMS for messages matching your keyword. '
                 'Nothing matched. Try changing the keyword or paste a payment manually.',
                 textAlign: TextAlign.center,
@@ -302,7 +302,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _detected.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, color: AppTheme.border),
+      separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border),
       itemBuilder: (context, i) {
         final d = _detected[i];
         final selected = _selected.contains(i);
@@ -346,7 +346,7 @@ class _DetectedTile extends StatelessWidget {
           children: [
             // Checkbox
             if (detected.alreadyImported)
-              const Icon(Icons.check_circle, color: AppTheme.textSecondary, size: 22)
+              Icon(Icons.check_circle, color: AppTheme.textSecondary, size: 22)
             else
               Checkbox(
                 value: selected,
@@ -397,7 +397,7 @@ class _DetectedTile extends StatelessWidget {
                         ),
                       if (detected.alreadyImported) ...[
                             const SizedBox(width: 8),
-                            const Text(
+                            Text(
                               'already in app',
                               style: TextStyle(
                                 color: AppTheme.textSecondary,
@@ -411,7 +411,7 @@ class _DetectedTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     DateFormat('d MMM y • h:mm a').format(p.paidAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 11,
                     ),
@@ -420,7 +420,7 @@ class _DetectedTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       p.sender!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.textSecondary,
                         fontSize: 11,
                         fontStyle: FontStyle.italic,

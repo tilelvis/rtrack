@@ -37,7 +37,7 @@ class PaymentHistoryList extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Tap "Log Payment" to paste an M-Pesa SMS.',
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: AppTheme.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -55,7 +55,7 @@ class PaymentHistoryList extends StatelessWidget {
       ),
       itemCount: list.length,
       separatorBuilder: (_, __) =>
-          const Divider(height: 1, color: AppTheme.border),
+          Divider(height: 1, color: AppTheme.border),
       itemBuilder: (context, i) {
         final p = list[i];
         return ListTile(
@@ -98,7 +98,7 @@ class PaymentHistoryList extends StatelessWidget {
                 '${p.paidAt.day}/${p.paidAt.month}/${p.paidAt.year} • '
                 '${p.paidAt.hour.toString().padLeft(2, '0')}:'
                 '${p.paidAt.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
                 ),
@@ -137,7 +137,7 @@ class PaymentHistoryList extends StatelessWidget {
                   ),
                   Text(
                     '${payments.length} total',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
                     ),

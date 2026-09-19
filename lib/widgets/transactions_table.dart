@@ -116,7 +116,7 @@ class TransactionsTable extends StatelessWidget {
             color: AppTheme.accent.withOpacity(0.3),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'No transactions yet',
             style: TextStyle(
               color: AppTheme.textSecondary,
@@ -125,7 +125,7 @@ class TransactionsTable extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Tap "Log Payment" to paste an M-Pesa SMS.',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
           ),
@@ -146,7 +146,7 @@ class TransactionsTable extends StatelessWidget {
       children: [
         // Header
         TableRow(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: AppTheme.border, width: 1),
             ),
@@ -170,7 +170,7 @@ class TransactionsTable extends StatelessWidget {
       child: Text(
         text.toUpperCase(),
         textAlign: align,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppTheme.textSecondary,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -186,7 +186,7 @@ class TransactionsTable extends StatelessWidget {
     final isMpesa = p.source == PaymentSource.mpesa;
     final typeColor = isMpesa ? AppTheme.primary : AppTheme.accent;
     return TableRow(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppTheme.border, width: 0.5),
         ),
@@ -200,7 +200,7 @@ class TransactionsTable extends StatelessWidget {
             children: [
               Text(
                 '${p.paidAt.day}/${p.paidAt.month}/${p.paidAt.year}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -210,7 +210,7 @@ class TransactionsTable extends StatelessWidget {
               Text(
                 '${p.paidAt.hour.toString().padLeft(2, '0')}:'
                 '${p.paidAt.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 10,
                 ),
@@ -235,7 +235,7 @@ class TransactionsTable extends StatelessWidget {
                   ),
                 )
               else
-                const Text(
+                Text(
                   '—',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
                 ),
@@ -245,7 +245,7 @@ class TransactionsTable extends StatelessWidget {
                   p.sender!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 10,
                     fontStyle: FontStyle.italic,

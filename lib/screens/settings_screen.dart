@@ -197,7 +197,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Switch between light and dark. System follows your phone\'s setting.',
                   style: TextStyle(
                     color: AppTheme.textSecondary,
@@ -205,7 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...ThemeMode.values.map((mode) {
+                ...AppThemeMode.values.map((mode) {
                   final selected = themeProvider.mode == mode;
                   return InkWell(
                     onTap: () => themeProvider.setMode(mode),
@@ -229,9 +229,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Row(
                         children: [
                           Icon(
-                            mode == ThemeMode.light
+                            mode == AppThemeMode.light
                                 ? Icons.light_mode_outlined
-                                : mode == ThemeMode.dark
+                                : mode == AppThemeMode.dark
                                     ? Icons.dark_mode_outlined
                                     : Icons.brightness_auto_outlined,
                             size: 20,
@@ -284,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const Spacer(),
                     Text(
                       '${_reminderTimes.length}/3',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.textSecondary,
                         fontSize: 12,
                       ),
@@ -292,7 +292,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Add multiple reminders (e.g. morning 8 AM + evening 7 PM) '
                   'so you never forget a payment. Max 3 slots.',
                   style: TextStyle(
@@ -392,7 +392,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             if (provider.activeLoan!.lenderPhone != null)
                               Text(
                                 provider.activeLoan!.lenderPhone!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppTheme.textSecondary,
                                   fontSize: 12,
                                 ),
@@ -400,7 +400,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             if (provider.activeLoan!.lenderEmail != null)
                               Text(
                                 provider.activeLoan!.lenderEmail!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppTheme.textSecondary,
                                   fontSize: 12,
                                 ),
@@ -428,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           )
         else
           Card(
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(16),
               child: Text(
                 'No lender contact saved. Edit your loan to add the lender\'s '
@@ -450,7 +450,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'All transactions, totals, M-Pesa codes, dates — shareable PDF.',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 ),
@@ -465,13 +465,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: const Text('Generate Full PDF Report'),
                   ),
                 ),
-                const Divider(height: 28, color: AppTheme.border),
+                Divider(height: 28, color: AppTheme.border),
                 const Text(
                   'Monthly Statement',
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Statement for a single month — perfect to email to your lender '
                   'as proof of payments made that month.',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
@@ -507,11 +507,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Principal: Ksh ${provider.activeLoan!.principal.toStringAsFixed(2)}',
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   ),
                   Text(
                     'Due: ${provider.activeLoan!.dueDate.day}/${provider.activeLoan!.dueDate.month}/${provider.activeLoan!.dueDate.year}',
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                   ),
                   if (provider.activeLoan!.keyword != null) ...[
                     const SizedBox(height: 4),
@@ -561,7 +561,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'No active loan. Create one from the Home screen.',
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: AppTheme.textSecondary),
               ),
             ),
           ),
@@ -578,12 +578,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Version 1.3.0 • Build 4',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'A personal loan tracker with M-Pesa SMS auto-import, '
                   'PDF reports, payment receipts, monthly statements, '
                   'home-screen widget, lender contact, and multiple daily reminders. '

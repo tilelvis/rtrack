@@ -1,20 +1,20 @@
-import 'package:flutter/material.dart' as mat;
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme/theme.dart';
 import 'providers/loan_provider.dart';
-import 'providers/theme_provider.dart' as providers;
+import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
-  mat.WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
   // Init notifications
   await NotificationService().init();
   await NotificationService().requestPermissions();
 
   // Load saved theme preference (defaults to system)
-  final themeProvider = providers.ThemeProvider();
+  final themeProvider = ThemeProvider();
   await themeProvider.load();
 
   // Load any existing loans
@@ -36,36 +36,35 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<LoanProvider>.value(value: loanProvider),
-        ChangeNotifierProvider<providers.ThemeProvider>.value(
-            value: themeProvider),
+        ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
       ],
       child: const LoanTrackerApp(),
     ),
   );
 }
 
-class LoanTrackerApp extends mat.StatelessWidget {
+class LoanTrackerApp extends StatelessWidget {
   const LoanTrackerApp({super.key});
 
   @override
-  mat.Widget build(mat.BuildContext context) {
-    final themeProvider = context.watch<providers.ThemeProvider>();
+  Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
 
-    // Map our enum to Flutter's ThemeMode
-    final mat.ThemeMode flutterMode;
+    // Map our AppThemeMode enum to Flutter's ThemeMode
+    final ThemeMode flutterMode;
     switch (themeProvider.mode) {
-      case providers.ThemeMode.light:
-        flutterMode = mat.ThemeMode.light;
+      case AppThemeMode.light:
+        flutterMode = ThemeMode.light;
         break;
-      case providers.ThemeMode.dark:
-        flutterMode = mat.ThemeMode.dark;
+      case AppThemeMode.dark:
+        flutterMode = ThemeMode.dark;
         break;
-      case providers.ThemeMode.system:
-        flutterMode = mat.ThemeMode.system;
+      case AppThemeMode.system:
+        flutterMode = ThemeMode.system;
         break;
     }
 
-    return mat.MaterialApp(
+    return MaterialApp(
       title: 'Loan Tracker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

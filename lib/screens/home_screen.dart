@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onDestinationSelected: (i) => setState(() => _index = i),
         backgroundColor: AppTheme.surface,
         indicatorColor: AppTheme.primary.withOpacity(0.18),
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined, color: AppTheme.textSecondary),
             selectedIcon: Icon(Icons.dashboard, color: AppTheme.primary),
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Create your first loan to start tracking daily payments and M-Pesa messages.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textSecondary),
+                style: TextStyle(color: AppTheme.textSecondary),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(

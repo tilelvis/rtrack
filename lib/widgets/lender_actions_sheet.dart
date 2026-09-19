@@ -64,7 +64,7 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                       const SizedBox(height: 2),
                       Text(
                         loan.lenderPhone!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 13,
                         ),

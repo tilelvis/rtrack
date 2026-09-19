@@ -296,7 +296,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                       widget.prefill?.rawMessage != null
                           ? 'Some fields were pre-filled from the M-Pesa SMS you pasted. Edit them as needed.'
                           : 'All fields marked with * are required. M-Pesa code is optional — leave it empty for cash payments.',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppTheme.textSecondary,
                         fontSize: 12,
                       ),

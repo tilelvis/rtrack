@@ -51,7 +51,7 @@ class PaymentHistoryList extends StatelessWidget {
     final listView = ListView.separated(
       padding: EdgeInsets.fromLTRB(16, embedded ? 0 : 16, 16, embedded ? 0 : 96),
       itemCount: list.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, color: AppTheme.border),
+      separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border),
       itemBuilder: (context, i) {
         final p = list[i];
         return _PaymentTile(payment: p, provider: provider);

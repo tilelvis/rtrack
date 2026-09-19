@@ -230,7 +230,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'When you scan your SMS inbox, only M-Pesa messages containing this '
                     'word will be matched to this loan. Use the lender\'s name (e.g. '
                     '"JOHN DOE") or phone number. Leave empty to match all M-Pesa messages.',
@@ -273,7 +273,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Save your lender\'s name, phone, and email. You can then '
                     'tap to call, WhatsApp, SMS, or email them — and send '
                     'payment receipts / monthly statements directly.',
@@ -399,13 +399,13 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Updates as you type. Verify the numbers make sense before saving.',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 12),
           if (!hasInput)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Text(
                 'Enter a principal amount to see the breakdown.',
@@ -425,7 +425,7 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
               isBold: true,
               valueColor: AppTheme.primary,
             ),
-            const Divider(height: 16, color: AppTheme.border),
+            Divider(height: 16, color: AppTheme.border),
             if (totalDays > 0) ...[
               _calcRow(
                 'Loan duration',
