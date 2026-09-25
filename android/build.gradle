@@ -1,0 +1,22 @@
+// Top-level Android build file.
+// All plugin configuration is handled in settings.gradle via the
+// declarative plugins{} block (Flutter 3.16+ style).
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

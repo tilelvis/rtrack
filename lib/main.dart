@@ -21,14 +21,18 @@ void main() async {
   final loanProvider = LoanProvider();
   await loanProvider.loadLoans();
 
-  // Default daily reminder at 8:00 AM
+  // Schedule daily reminder with the intelligent recommendation
   if (loanProvider.activeLoan != null) {
-    await NotificationService().scheduleDailyReminder(
-      hour: 8,
-      minute: 0,
-      title: 'Loan Tracker Reminder',
-      body:
-          'Remember to make your payment of Ksh ${loanProvider.activeLoan!.expectedPerInterval.toStringAsFixed(0)} today.',
+    final rec = loanProvider.dailyRecommendation;
+    final isCritical = rec?.severity.name == 'critical' ||
+        rec?.severity.name == 'elevated';
+    await NotificationService().scheduleMultipleReminders(
+      times: const [ReminderTime(hour: 8, minute: 0)],
+      loanTitle: loanProvider.activeLoan!.title,
+      expectedAmount: rec?.dailyAmount ??
+          loanProvider.activeLoan!.expectedPerInterval,
+      recommendationBody: rec?.message,
+      isCritical: isCritical,
     );
   }
 

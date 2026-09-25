@@ -62,6 +62,20 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
+    // Critical channel — max importance for overdue / high-pressure alerts
+    const criticalChannel = AndroidNotificationChannel(
+      'loan_tracker_critical',
+      'Critical Payment Alerts',
+      description: 'Urgent alerts for overdue or high-stake payments',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(criticalChannel);
+
     _initialized = true;
   }
 
@@ -122,21 +136,58 @@ class NotificationService {
     required List<ReminderTime> times,
     required String loanTitle,
     required double expectedAmount,
+    String? recommendationBody,
+    bool isCritical = false,
   }) async {
     await init();
     await cancelAll();
     for (var i = 0; i < times.length && i < _maxReminders; i++) {
       final t = times[i];
+      final body = recommendationBody ??
+          (loanTitle.isEmpty
+              ? 'Remember to make your loan payment today.'
+              : 'Pay Ksh ${expectedAmount.toStringAsFixed(0)} for "$loanTitle" today.');
       await scheduleDailyReminder(
         hour: t.hour,
         minute: t.minute,
-        title: 'Loan Tracker Reminder',
-        body: loanTitle.isEmpty
-            ? 'Remember to make your loan payment today.'
-            : 'Pay Ksh ${expectedAmount.toStringAsFixed(0)} for "$loanTitle" today.',
+        title: isCritical ? '⚠️ Critical payment due' : 'Loan Tracker Reminder',
+        body: body,
         slotId: i,
       );
     }
+  }
+
+  /// Show an IMMEDIATE critical notification (e.g. when a payment is overdue
+  /// or the daily recommendation is very high). Used for in-app events
+  /// (not scheduled).
+  Future<void> showCriticalNotification({
+    required String title,
+    required String body,
+  }) async {
+    await init();
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'loan_tracker_critical',
+        'Critical Payment Alerts',
+        channelDescription: 'Urgent alerts for overdue or high-stake payments',
+        importance: Importance.max,
+        priority: Priority.max,
+        icon: '@mipmap/ic_launcher',
+        enableVibration: true,
+        playSound: true,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+    await _plugin.show(
+      998, // fixed id for critical alerts
+      title,
+      body,
+      details,
+    );
   }
 
   /// Show an immediate test notification.

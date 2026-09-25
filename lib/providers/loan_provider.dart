@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/loan.dart';
 import '../models/payment.dart';
 import '../services/database_service.dart';
+import '../services/daily_payment_calculator.dart';
 import '../services/widget_service.dart';
 
 class LoanProvider extends ChangeNotifier {
@@ -107,6 +108,22 @@ class LoanProvider extends ChangeNotifier {
         p.paidAt.year == today.year &&
         p.paidAt.month == today.month &&
         p.paidAt.day == today.day);
+  }
+
+  /// Intelligent daily payment recommendation based on remaining balance
+  /// and days until due. Returns null if no active loan.
+  ///
+  /// Example: 10 days left, Ksh 2000 remaining → recommends Ksh 200/day.
+  /// Example: 15 days left, Ksh 2000 remaining → recommends Ksh 150/day.
+  /// Example: 3 days left, Ksh 2000 remaining → recommends Ksh 700/day
+  ///          (critical severity).
+  DailyPaymentRecommendation? get dailyRecommendation {
+    final loan = _activeLoan;
+    if (loan == null) return null;
+    return DailyPaymentCalculator.compute(
+      loan: loan,
+      remainingBalance: balanceRemaining,
+    );
   }
 
   /// Push loan summary to SharedPreferences for the native home-screen widget.

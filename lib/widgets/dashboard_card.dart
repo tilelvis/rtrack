@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
+import '../services/daily_payment_calculator.dart';
 import '../services/mpesa_parser.dart';
 import '../theme/app_tokens.dart';
 import '../theme/theme.dart';
@@ -226,11 +227,12 @@ class DashboardCard extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
 
         // ------------------------------------------------------------------
-        // PAYMENT ACTION CARD — primary CTA
+        // PAYMENT ACTION CARD — primary CTA with intelligent daily recommendation
         // ------------------------------------------------------------------
         _PaymentActionCard(
           amount: loan.expectedPerInterval,
           paid: todayPaid,
+          recommendation: provider.dailyRecommendation,
         ),
         const SizedBox(height: AppSpacing.md),
 
@@ -300,69 +302,255 @@ class _ProgressRing extends StatelessWidget {
   }
 }
 
-/// Primary payment action card — prominent CTA for "Pay Ksh X today".
+/// Primary payment action card — prominent CTA showing the intelligent
+/// daily recommendation.
+///
+/// When the loan is fully paid, shows a celebratory state.
+/// When payment is overdue, shows a CRITICAL alert with the full balance.
+/// Otherwise shows: "Pay Ksh X daily — N days left, Ksh Y remaining".
 class _PaymentActionCard extends StatelessWidget {
   final double amount;
   final bool paid;
+  final DailyPaymentRecommendation? recommendation;
 
-  const _PaymentActionCard({required this.amount, required this.paid});
+  const _PaymentActionCard({
+    required this.amount,
+    required this.paid,
+    this.recommendation,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
     final text = Theme.of(context).textTheme;
+    final rec = recommendation;
+
+    // ----------------------------------------------------------------
+    // Fully paid — celebratory state
+    // ----------------------------------------------------------------
+    if (rec != null && rec.severity == RecommendationSeverity.paid) {
+      return AppCard.tinted(
+        tintColor: tokens.successSurface,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            IconBubble(
+              icon: Icons.celebration,
+              color: tokens.brandSuccess,
+              size: 44,
+              iconSize: 22,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Loan fully paid', style: text.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    rec.message,
+                    style: text.bodySmall?.copyWith(
+                      color: tokens.onSuccessContainer.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ----------------------------------------------------------------
+    // Today already paid — show next-day recommendation
+    // ----------------------------------------------------------------
+    if (paid && rec != null) {
+      return AppCard.tinted(
+        tintColor: tokens.successSurface,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            IconBubble(
+              icon: Icons.check_circle,
+              color: tokens.brandSuccess,
+              size: 44,
+              iconSize: 22,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Paid today — nice work!',
+                    style: text.titleMedium?.copyWith(
+                      color: tokens.onSuccessContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    rec.daysRemaining > 0
+                        ? 'Tomorrow: Ksh ${rec.dailyAmount.toStringAsFixed(0)}/day × ${rec.daysRemaining} days'
+                        : 'Loan cleared 🎉',
+                    style: text.bodySmall?.copyWith(
+                      color: tokens.onSuccessContainer.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ----------------------------------------------------------------
+    // Critical / overdue — red alert
+    // ----------------------------------------------------------------
+    if (rec != null && rec.severity == RecommendationSeverity.critical) {
+      return AppCard.tinted(
+        tintColor: tokens.dangerSurface,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            IconBubble(
+              icon: Icons.warning_rounded,
+              color: tokens.danger,
+              size: 44,
+              iconSize: 22,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rec.daysRemaining == 0
+                        ? 'OVERDUE — pay today'
+                        : 'Critical — only ${rec.daysRemaining} day${rec.daysRemaining == 1 ? '' : 's'} left',
+                    style: text.titleMedium?.copyWith(
+                      color: tokens.onDangerContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pay Ksh ${rec.dailyAmount.toStringAsFixed(0)} today to clear Ksh ${rec.remainingBalance.toStringAsFixed(0)}',
+                    style: text.bodySmall?.copyWith(
+                      color: tokens.onDangerContainer.withOpacity(0.85),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    rec.message,
+                    style: text.bodySmall?.copyWith(
+                      color: tokens.onDangerContainer.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ----------------------------------------------------------------
+    // Normal / moderate / elevated — show daily recommendation
+    // ----------------------------------------------------------------
+    final Color tintColor;
+    final Color iconColor;
+    final Color onTintColor;
+    final IconData iconData;
+    switch (rec?.severity) {
+      case RecommendationSeverity.elevated:
+        tintColor = tokens.warningSurface;
+        iconColor = tokens.warning;
+        onTintColor = tokens.onWarningContainer;
+        iconData = Icons.priority_high;
+        break;
+      case RecommendationSeverity.moderate:
+        tintColor = scheme.primaryContainer;
+        iconColor = scheme.primary;
+        onTintColor = scheme.onPrimaryContainer;
+        iconData = Icons.bolt_outlined;
+        break;
+      case RecommendationSeverity.normal:
+      default:
+        tintColor = scheme.primaryContainer;
+        iconColor = scheme.primary;
+        onTintColor = scheme.onPrimaryContainer;
+        iconData = Icons.bolt_outlined;
+        break;
+    }
 
     return AppCard.tinted(
-      tintColor: paid ? tokens.successSurface : scheme.primaryContainer,
+      tintColor: tintColor,
       padding: const EdgeInsets.all(AppSpacing.md),
-      onTap: () {
-        // Navigate to M-Pesa paste screen — handled by parent via Hero tap
-      },
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconBubble(
-            icon: paid ? Icons.check_circle : Icons.bolt_outlined,
-            color: paid ? tokens.brandSuccess : scheme.primary,
-            size: 44,
-            iconSize: 22,
+          Row(
+            children: [
+              IconBubble(
+                icon: iconData,
+                color: iconColor,
+                size: 44,
+                iconSize: 22,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rec != null
+                          ? 'Pay Ksh ${rec.dailyAmount.toStringAsFixed(0)} today'
+                          : 'Pay Ksh ${amount.toStringAsFixed(0)} today',
+                      style: text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: onTintColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      rec?.message ??
+                          'Keep your plan on track',
+                      style: text.bodySmall?.copyWith(
+                        color: onTintColor.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: onTintColor),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (rec != null && rec.daysRemaining > 0) ...[
+            const SizedBox(height: AppSpacing.sm),
+            // Visual breakdown bar
+            Row(
               children: [
-                Text(
-                  paid
-                      ? 'Payment done today'
-                      : 'Pay Ksh ${amount.toStringAsFixed(0)} today',
-                  style: text.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: paid
-                        ? tokens.onSuccessContainer
-                        : scheme.onPrimaryContainer,
+                Expanded(
+                  flex: rec.daysRemaining,
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: iconColor,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
-                  paid
-                      ? 'Great work — see you tomorrow'
-                      : 'Keep your plan on track',
-                  style: text.bodySmall?.copyWith(
-                    color: paid
-                        ? tokens.onSuccessContainer.withOpacity(0.7)
-                        : scheme.onPrimaryContainer.withOpacity(0.7),
-                  ),
+                  '${rec.daysRemaining} day${rec.daysRemaining == 1 ? '' : 's'} × '
+                  'Ksh ${rec.dailyAmount.toStringAsFixed(0)}/day',
+                  style: text.labelSmall?.copyWith(color: onTintColor),
                 ),
               ],
             ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: paid
-                ? tokens.onSuccessContainer
-                : scheme.onPrimaryContainer,
-          ),
+          ],
         ],
       ),
     );
