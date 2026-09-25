@@ -90,70 +90,74 @@ class DashboardCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
 
-              // Balance + progress ring
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              // Balance remaining — full width (no donut)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'BALANCE REMAINING',
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                        const SizedBox(height: 4),
-                        // Large financial amount — most prominent thing on screen
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            MpesaParser.formatKes(balance),
-                            style: TextStyle(fontFamily: "JetBrainsMono", 
-                              fontSize: 36,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        // Mini progress bar
-                        TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0, end: progress),
-                          duration: AppDurations.slow,
-                          curve: Curves.easeOutCubic,
-                          builder: (context, value, child) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: value,
-                                minHeight: 6,
-                                backgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
-                                color: tokens.brandSuccess,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${(progress * 100).toStringAsFixed(0)}% repaid',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: tokens.brandSuccess,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ],
+                  Text(
+                    'BALANCE REMAINING',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 4),
+                  // Large financial amount — most prominent thing on screen
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      MpesaParser.formatKes(balance),
+                      style: TextStyle(fontFamily: "JetBrainsMono", 
+                        fontSize: 36,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.md),
-                  // Animated progress ring
-                  _ProgressRing(progress: progress),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Mini progress bar
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: progress),
+                    duration: AppDurations.slow,
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          minHeight: 6,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                          color: tokens.brandSuccess,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${(progress * 100).toStringAsFixed(0)}% repaid',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: tokens.brandSuccess,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+
+              // Compact recent payments list (no cards, just rows on top
+              // of the hero card surface)
+              if (provider.recentPayments.isNotEmpty) ...[
+                Text(
+                  'RECENT PAYMENTS',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                ...provider.recentPayments.take(3).map((p) => _CompactPaymentRow(
+                      payment: p,
+                    )),
+                const SizedBox(height: AppSpacing.md),
+              ],
 
               // Today status row
               Row(
@@ -247,54 +251,65 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
-/// Animated circular progress ring with percentage in the center.
-class _ProgressRing extends StatelessWidget {
-  final double progress;
+/// Compact payment row — shows date + amount inline, no card wrapper.
+/// Used inside the hero card to list recent payments directly on the
+/// tinted surface (keeps the dashboard compact — no extra card chrome).
+class _CompactPaymentRow extends StatelessWidget {
+  final Payment payment;
 
-  const _ProgressRing({required this.progress});
+  const _CompactPaymentRow({required this.payment});
 
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
-    final scheme = Theme.of(context).colorScheme;
-    final size = 72.0;
+    final isMpesa = payment.source == PaymentSource.mpesa;
 
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
         children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: progress),
-            duration: AppDurations.hero,
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return CircularProgressIndicator(
-                value: value,
-                strokeWidth: 6,
-                strokeCap: StrokeCap.round,
-                color: tokens.brandSuccess,
-                backgroundColor: scheme.surfaceContainerHighest,
-              );
-            },
+          // Date (compact: d MMM)
+          SizedBox(
+            width: 48,
+            child: Text(
+              DateFormat('d MMM').format(payment.paidAt),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${(progress * 100).toStringAsFixed(0)}%',
-                style: TextStyle(fontFamily: "JetBrainsMono", 
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: scheme.onSurface,
+          const SizedBox(width: AppSpacing.sm),
+
+          // M-Pesa code (if present) or source label
+          if (payment.mpesaCode != null)
+            Expanded(
+              child: Text(
+                payment.mpesaCode!,
+                style: TextStyle(fontFamily: "JetBrainsMono",
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
-              Text(
-                'REPAID',
-                style: Theme.of(context).textTheme.labelSmall,
+            )
+          else
+            Expanded(
+              child: Text(
+                payment.sender ?? 'Manual',
+                style: Theme.of(context).textTheme.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
+            ),
+
+          // Amount — green, monospace, bold
+          Text(
+            'Ksh ${payment.amount.toStringAsFixed(0)}',
+            style: TextStyle(fontFamily: "JetBrainsMono",
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: tokens.brandSuccess,
+            ),
           ),
         ],
       ),
