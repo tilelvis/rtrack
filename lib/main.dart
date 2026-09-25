@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/loan_provider.dart';
 import 'providers/theme_provider.dart';
+import 'services/daily_payment_calculator.dart';
 import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
 import 'theme/theme.dart';
@@ -24,8 +25,8 @@ void main() async {
   // Schedule daily reminder with the intelligent recommendation
   if (loanProvider.activeLoan != null) {
     final rec = loanProvider.dailyRecommendation;
-    final isCritical = rec?.severity.name == 'critical' ||
-        rec?.severity.name == 'elevated';
+    final isCritical = rec?.severity == RecommendationSeverity.critical ||
+        rec?.severity == RecommendationSeverity.elevated;
     await NotificationService().scheduleMultipleReminders(
       times: const [ReminderTime(hour: 8, minute: 0)],
       loanTitle: loanProvider.activeLoan!.title,

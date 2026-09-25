@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../models/payment.dart';
 import '../providers/loan_provider.dart';
 import '../services/daily_payment_calculator.dart';
 import '../services/mpesa_parser.dart';
@@ -262,7 +263,6 @@ class _CompactPaymentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
-    final isMpesa = payment.source == PaymentSource.mpesa;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
