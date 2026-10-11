@@ -168,7 +168,7 @@ class MpesaParser {
       } else {
         // Standard "sent to NAME" or "to NAME"
         final match = RegExp(
-          r'(?:sent to|to)\s+([A-Z][A-Z\s.\']{2,50}?)\s+(?:on|at|\d)',
+          r"(?:sent to|to)\s+([A-Z][A-Z\s.']{2,50}?)\s+(?:on|at|\d)",
           caseSensitive: false,
         ).firstMatch(text);
         if (match != null) {
@@ -185,7 +185,7 @@ class MpesaParser {
         lower.contains('has been received')) {
       kind = 'received';
       final match = RegExp(
-        r'received from\s+([A-Z][A-Z\s.\']{2,50}?)\s+(?:on|at|\d)',
+        r"received from\s+([A-Z][A-Z\s.']{2,50}?)\s+(?:on|at|\d)",
         caseSensitive: false,
       ).firstMatch(text);
       if (match != null) {
