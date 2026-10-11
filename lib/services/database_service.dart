@@ -19,7 +19,7 @@ class DatabaseService {
     final path = p.join(dbPath, 'loan_tracker.db');
     _db = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onOpen: (db) async {
@@ -58,6 +58,7 @@ class DatabaseService {
         mpesa_code TEXT,
         phone TEXT,
         sender TEXT,
+        account TEXT,
         raw_message TEXT,
         source TEXT NOT NULL,
         notes TEXT,
@@ -118,6 +119,17 @@ class DatabaseService {
         'CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_mpesa_code_unique '
         'ON payments(mpesa_code) WHERE mpesa_code IS NOT NULL',
       );
+    }
+
+    if (oldVersion < 5) {
+      // Add account column to payments (for bank loan payments where the
+      // M-Pesa message says "for account XXXX" instead of a phone number)
+      final paymentCols = await db.rawQuery('PRAGMA table_info(payments)');
+      final paymentColNames =
+          paymentCols.map((c) => c['name'] as String).toSet();
+      if (!paymentColNames.contains('account')) {
+        await db.execute('ALTER TABLE payments ADD COLUMN account TEXT');
+      }
     }
   }
 
@@ -200,6 +212,7 @@ class DatabaseService {
       mpesaCode: code,
       phone: payment.phone,
       sender: payment.sender,
+      account: payment.account,
       rawMessage: payment.rawMessage,
       source: payment.source,
       notes: payment.notes,

@@ -6,7 +6,8 @@ class Payment {
   final DateTime paidAt;
   final String? mpesaCode; // e.g. SI7K2PX1HZ
   final String? phone; // last 4 or full
-  final String? sender; // e.g. "JOHN DOE"
+  final String? sender; // e.g. "JOHN DOE" or "NCBA BANK KENYA PLC"
+  final String? account; // e.g. "001709" (for bank loan payments)
   final String? rawMessage; // original SMS text
   final PaymentSource source; // mpesa | manual
   final String? notes;
@@ -19,6 +20,7 @@ class Payment {
     this.mpesaCode,
     this.phone,
     this.sender,
+    this.account,
     this.rawMessage,
     this.source = PaymentSource.manual,
     this.notes,
@@ -33,6 +35,7 @@ class Payment {
       'mpesa_code': mpesaCode,
       'phone': phone,
       'sender': sender,
+      'account': account,
       'raw_message': rawMessage,
       'source': source.name,
       'notes': notes,
@@ -48,6 +51,7 @@ class Payment {
       mpesaCode: m['mpesa_code'] as String?,
       phone: m['phone'] as String?,
       sender: m['sender'] as String?,
+      account: m['account'] as String?,
       rawMessage: m['raw_message'] as String?,
       source:
           PaymentSource.values.byName(m['source'] as String? ?? 'manual'),

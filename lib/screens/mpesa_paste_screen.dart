@@ -58,6 +58,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
       mpesaCode: p.mpesaCode,
       phone: p.phone,
       sender: p.sender,
+      account: p.account,
       rawMessage: p.rawMessage,
       source: PaymentSource.mpesa,
     );

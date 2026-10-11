@@ -342,7 +342,7 @@ class _PaymentActionCard extends StatelessWidget {
     final rec = recommendation;
 
     // ----------------------------------------------------------------
-    // Fully paid — celebratory state
+    // Fully paid — celebratory state with "Close" button
     // ----------------------------------------------------------------
     if (rec != null && rec.severity == RecommendationSeverity.paid) {
       return AppCard.tinted(
@@ -367,6 +367,32 @@ class _PaymentActionCard extends StatelessWidget {
                     rec.message,
                     style: text.bodySmall?.copyWith(
                       color: tokens.onSuccessContainer.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  // Close button — removes this paid loan from the dashboard
+                  TextButton.icon(
+                    onPressed: () {
+                      final loan = provider.activeLoan;
+                      if (loan != null) {
+                        provider.closePaidLoan(loan.id);
+                      }
+                    },
+                    icon: Icon(Icons.check_circle_outline,
+                        size: 16, color: tokens.brandSuccess),
+                    label: Text(
+                      'Close & switch to next loan',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: tokens.brandSuccess,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                 ],

@@ -27,12 +27,38 @@ class LoanProvider extends ChangeNotifier {
     notifyListeners();
     _loans = await _db.getAllLoans();
     if (_activeLoan == null && _loans.isNotEmpty) {
+      // Pick the first loan that is NOT fully paid (has remaining balance).
+      // If all are fully paid, fall back to the first loan.
+      final unpaid = _loans.where((l) {
+        // We don't have totalPaid here yet, so just pick the first one.
+        // setActiveLoan will compute the balance and the UI will show
+        // the "Close" button if it's fully paid.
+        return true;
+      }).toList();
       await setActiveLoan(_loans.first.id);
     } else if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     }
     _loading = false;
     notifyListeners();
+    _refreshWidget();
+  }
+
+  /// Close a fully-paid loan — deletes it from the database and
+  /// switches to the next available loan. Called from the dashboard
+  /// when the user taps "Close" on the paid celebration card.
+  Future<void> closePaidLoan(String id) async {
+    await _db.deleteLoan(id);
+    if (_activeLoan?.id == id) _activeLoan = null;
+    _loans = await _db.getAllLoans();
+    // Switch to the first remaining loan (if any)
+    if (_loans.isNotEmpty) {
+      await setActiveLoan(_loans.first.id);
+    } else {
+      _totalPaid = 0;
+      _recentPayments = [];
+      notifyListeners();
+    }
     _refreshWidget();
   }
 

@@ -124,6 +124,7 @@ class SmsService {
           mpesaCode: parsed.mpesaCode,
           phone: parsed.phone,
           sender: parsed.sender,
+          account: parsed.account,
           rawMessage: parsed.rawMessage,
           source: PaymentSource.mpesa,
         ),
