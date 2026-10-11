@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/loan.dart';
-import '../theme/theme.dart';
 
 /// Bottom sheet with quick actions for contacting the lender:
 ///   - Call (opens phone dialer)
@@ -42,9 +41,9 @@ Future<void> showLenderActionsSheet(BuildContext context, Loan loan) async {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
+                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5)),
                 ),
                 child: Icon(Icons.person, color: Theme.of(context).colorScheme.secondary),
               ),
@@ -211,9 +210,9 @@ class _ActionTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.4)),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
         ),
         child: Column(
           children: [

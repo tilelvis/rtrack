@@ -192,7 +192,7 @@ class _MpesaPasteScreenState extends State<MpesaPasteScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                   border: Border.all(color: Theme.of(context).colorScheme.error),
                   borderRadius: BorderRadius.circular(8),
                 ),

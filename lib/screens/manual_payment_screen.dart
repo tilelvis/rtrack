@@ -282,9 +282,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [

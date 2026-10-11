@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.account_balance_wallet_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(

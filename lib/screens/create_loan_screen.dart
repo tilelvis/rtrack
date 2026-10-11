@@ -212,9 +212,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,9 +255,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+                border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -381,9 +381,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary.withOpacity(0.06),
+        color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.4)),
+        border: Border.all(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,9 +455,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).colorScheme.error.withOpacity(0.4)),
+                    border: Border.all(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -482,9 +482,9 @@ class _CreateLoanScreenState extends State<CreateLoanScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.4)),
+                    border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [

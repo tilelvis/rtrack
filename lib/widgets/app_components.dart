@@ -216,7 +216,7 @@ class MetricCard extends StatelessWidget {
     final Color iconFg;
     if (tintColor != null) {
       bg = tintColor!;
-      iconBg = (iconColor ?? scheme.primary).withOpacity(0.15);
+      iconBg = (iconColor ?? scheme.primary).withValues(alpha: 0.15);
       iconFg = iconColor ?? scheme.primary;
     } else {
       bg = scheme.surfaceContainerHigh;
@@ -379,7 +379,7 @@ class IconBubble extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: c.withOpacity(0.12),
+        color: c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       child: Icon(icon, size: iconSize, color: c),

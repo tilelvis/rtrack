@@ -366,13 +366,14 @@ class _PaymentActionCard extends StatelessWidget {
                   Text(
                     rec.message,
                     style: text.bodySmall?.copyWith(
-                      color: tokens.onSuccessContainer.withOpacity(0.8),
+                      color: tokens.onSuccessContainer.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   // Close button — removes this paid loan from the dashboard
                   TextButton.icon(
                     onPressed: () {
+                      final provider = context.read<LoanProvider>();
                       final loan = provider.activeLoan;
                       if (loan != null) {
                         provider.closePaidLoan(loan.id);
@@ -435,7 +436,7 @@ class _PaymentActionCard extends StatelessWidget {
                         ? 'Tomorrow: Ksh ${rec.dailyAmount.toStringAsFixed(0)}/day × ${rec.daysRemaining} days'
                         : 'Loan cleared 🎉',
                     style: text.bodySmall?.copyWith(
-                      color: tokens.onSuccessContainer.withOpacity(0.8),
+                      color: tokens.onSuccessContainer.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -478,7 +479,7 @@ class _PaymentActionCard extends StatelessWidget {
                   Text(
                     'Pay Ksh ${rec.dailyAmount.toStringAsFixed(0)} today to clear Ksh ${rec.remainingBalance.toStringAsFixed(0)}',
                     style: text.bodySmall?.copyWith(
-                      color: tokens.onDangerContainer.withOpacity(0.85),
+                      color: tokens.onDangerContainer.withValues(alpha: 0.85),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -486,7 +487,7 @@ class _PaymentActionCard extends StatelessWidget {
                   Text(
                     rec.message,
                     style: text.bodySmall?.copyWith(
-                      color: tokens.onDangerContainer.withOpacity(0.7),
+                      color: tokens.onDangerContainer.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -559,7 +560,7 @@ class _PaymentActionCard extends StatelessWidget {
                       rec?.message ??
                           'Keep your plan on track',
                       style: text.bodySmall?.copyWith(
-                        color: onTintColor.withOpacity(0.7),
+                        color: onTintColor.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

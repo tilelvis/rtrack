@@ -29,7 +29,7 @@ class PaymentHistoryList extends StatelessWidget {
               Icon(
                 Icons.receipt_long_outlined,
                 size: 64,
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -107,10 +107,10 @@ class _PaymentTile extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withOpacity(0.15),
+          color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withOpacity(0.5),
+            color: (isMpesa ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary).withValues(alpha: 0.5),
           ),
         ),
         child: Icon(

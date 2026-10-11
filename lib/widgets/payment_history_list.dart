@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/payment.dart';
 import '../providers/loan_provider.dart';
-import '../theme/theme.dart';
 
 /// Reusable payment history list widget.
 /// Shows recent payments for the active loan.
@@ -28,7 +26,7 @@ class PaymentHistoryList extends StatelessWidget {
               Icon(
                 Icons.receipt_long_outlined,
                 size: 64,
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 16),
               Text(
@@ -68,13 +66,13 @@ class PaymentHistoryList extends StatelessWidget {
               color: (p.source.name == 'mpesa'
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(context).colorScheme.secondary)
-                  .withOpacity(0.15),
+                  .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: (p.source.name == 'mpesa'
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.secondary)
-                    .withOpacity(0.5),
+                    .withValues(alpha: 0.5),
               ),
             ),
             child: Icon(

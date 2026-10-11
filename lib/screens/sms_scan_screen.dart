@@ -279,7 +279,7 @@ class _SmsScanScreenState extends State<SmsScanScreen> {
               Icon(
                 Icons.inbox_outlined,
                 size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -382,7 +382,7 @@ class _DetectedTile extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
+                            color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(

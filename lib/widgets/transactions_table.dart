@@ -85,7 +85,7 @@ class TransactionsTable extends StatelessWidget {
           Icon(
             Icons.receipt_long_outlined,
             size: 36,
-            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(

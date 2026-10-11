@@ -1,7 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../models/payment.dart';
 import '../theme/app_tokens.dart';
 import '../theme/theme.dart';
@@ -175,7 +174,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
         children: [
           Icon(
             Icons.show_chart,
-            color: tokens.chartPaid.withOpacity(0.3),
+            color: tokens.chartPaid.withValues(alpha: 0.3),
             size: 36,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -248,7 +247,7 @@ class _PaymentTrendChartState extends State<PaymentTrendChart> {
           ),
           belowBarData: BarAreaData(
             show: true,
-            color: tokens.chartPaid.withOpacity(0.12),
+            color: tokens.chartPaid.withValues(alpha: 0.12),
           ),
         ),
       ],
