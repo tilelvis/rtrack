@@ -99,17 +99,17 @@ class PaymentsScreen extends StatelessWidget {
                 }
 
                 // Hidden loans section
-                if (hidden.isNotEmpty) ...[
-                  const PopupMenuDivider(),
-                  PopupMenuItem<String>(
+                if (hidden.isNotEmpty) {
+                  items.add(const PopupMenuDivider());
+                  items.add(PopupMenuItem<String>(
                     enabled: false,
                     child: Text(
                       'HIDDEN LOANS',
                       style: Theme.of(ctx).textTheme.labelSmall,
                     ),
-                  ),
-                  for (final loan in hidden)
-                    PopupMenuItem<String>(
+                  ));
+                  for (final loan in hidden) {
+                    items.add(PopupMenuItem<String>(
                       value: loan.id,
                       child: Row(
                         children: [
@@ -139,7 +139,6 @@ class PaymentsScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          // Unhide button
                           IconButton(
                             icon: Icon(Icons.visibility_outlined,
                                 size: 16,
@@ -155,8 +154,9 @@ class PaymentsScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
-                ];
+                    ));
+                  }
+                }
 
                 return items;
               },

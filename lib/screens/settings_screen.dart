@@ -562,7 +562,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             );
             if (confirmed == true) {
-              await provider.deleteLoan(loan.id);
+              await provider.closePaidLoan(loan.id);
               await NotificationService().cancelAll();
             }
           },

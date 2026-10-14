@@ -201,15 +201,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ));
                   }
 
-                  if (hidden.isNotEmpty) ...[
-                    const PopupMenuDivider(),
-                    PopupMenuItem<String>(
+                  if (hidden.isNotEmpty) {
+                    items.add(const PopupMenuDivider());
+                    items.add(PopupMenuItem<String>(
                       enabled: false,
                       child: Text('HIDDEN',
                           style: Theme.of(ctx).textTheme.labelSmall),
-                    ),
-                    for (final loan in hidden)
-                      PopupMenuItem<String>(
+                    ));
+                    for (final loan in hidden) {
+                      items.add(PopupMenuItem<String>(
                         value: loan.id,
                         child: Row(
                           children: [
@@ -249,8 +249,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                      ),
-                  ];
+                      ));
+                    }
+                  }
 
                   return items;
                 },

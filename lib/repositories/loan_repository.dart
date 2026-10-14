@@ -1,6 +1,6 @@
 import '../models/loan.dart';
 import '../models/payment.dart';
-import 'database_service.dart';
+import '../services/database_service.dart';
 
 /// Repository layer — sits between the Provider (state) and the
 /// DatabaseService (raw SQLite). All data access goes through here.
