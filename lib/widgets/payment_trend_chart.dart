@@ -2,8 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/payment.dart';
+import "../theme/theme.dart";
 import '../theme/app_tokens.dart';
-import '../theme/theme.dart';
 import 'app_components.dart';
 
 /// Payment trend chart — line chart of weekly payments over last N weeks,

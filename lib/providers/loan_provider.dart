@@ -1,13 +1,36 @@
 import 'package:flutter/foundation.dart';
 import '../models/loan.dart';
 import '../models/payment.dart';
-import '../services/database_service.dart';
+import '../repositories/loan_repository.dart';
 import '../services/daily_payment_calculator.dart';
 import '../services/widget_service.dart';
 
+/// Extension to check if two dates fall on the same calendar day.
+extension DateTimeSameDay on DateTime {
+  bool isSameDayAs(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
+  }
+}
+
+/// App-wide state manager. Holds the active loan, payment list, and
+/// derived values (progress, balance, daily recommendation).
+///
+/// Architecture:
+///   - Does NOT touch sqflite directly — goes through [LoanRepository]
+///   - Does NOT contain formatting logic — that lives in services
+///   - Notifies listeners on every state change
+///
+/// Dependency injection: repository is passed via constructor so tests
+/// can inject a mock. No global singletons.
 class LoanProvider extends ChangeNotifier {
-  final _db = DatabaseService();
-  final _widget = WidgetService();
+  final LoanRepository _repo;
+  final WidgetService _widget;
+
+  LoanProvider({
+    required LoanRepository repository,
+    WidgetService? widgetService,
+  })  : _repo = repository,
+        _widget = widgetService ?? WidgetService();
 
   List<Loan> _loans = [];
   Loan? _activeLoan;
@@ -25,17 +48,37 @@ class LoanProvider extends ChangeNotifier {
   Future<void> loadLoans() async {
     _loading = true;
     notifyListeners();
-    _loans = await _db.getAllLoans();
+    _loans = await _repo.getAllLoans();
+
+    // Auto-hide loans that are past their due date AND fully paid.
+    for (final loan in _loans) {
+      if (!loan.isHidden) {
+        final isPastDue = DateTime.now().isAfter(loan.dueDate);
+        final totalPaid = await _repo.getTotalPaid(loan.id);
+        final isFullyPaid = totalPaid >= loan.totalPayable;
+        if (isPastDue && isFullyPaid) {
+          await _repo.setLoanHidden(loan.id, true);
+        }
+      }
+    }
+    _loans = await _repo.getAllLoans();
+
     if (_activeLoan == null && _loans.isNotEmpty) {
-      // Pick the first loan that is NOT fully paid (has remaining balance).
-      // If all are fully paid, fall back to the first loan.
-      final unpaid = _loans.where((l) {
-        // We don't have totalPaid here yet, so just pick the first one.
-        // setActiveLoan will compute the balance and the UI will show
-        // the "Close" button if it's fully paid.
-        return true;
-      }).toList();
-      await setActiveLoan(_loans.first.id);
+      final visible = _loans.where((l) => !l.isHidden).toList();
+      if (visible.isNotEmpty) {
+        visible.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        final now = DateTime.now();
+        final current = visible
+            .where((l) => now.isBefore(l.dueDate) || now.isSameDayAs(l.dueDate))
+            .toList();
+        if (current.isNotEmpty) {
+          await setActiveLoan(current.first.id);
+        } else {
+          await setActiveLoan(visible.last.id);
+        }
+      } else {
+        await setActiveLoan(_loans.first.id);
+      }
     } else if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     }
@@ -44,14 +87,30 @@ class LoanProvider extends ChangeNotifier {
     _refreshWidget();
   }
 
-  /// Close a fully-paid loan — deletes it from the database and
-  /// switches to the next available loan. Called from the dashboard
-  /// when the user taps "Close" on the paid celebration card.
+  Future<void> setActiveLoan(String id) async {
+    _activeLoan = await _repo.getLoan(id);
+    if (_activeLoan != null) {
+      _totalPaid = await _repo.getTotalPaid(id);
+      _recentPayments = await _repo.getPaymentsForLoan(id);
+    } else {
+      _totalPaid = 0;
+      _recentPayments = [];
+    }
+    notifyListeners();
+    _refreshWidget();
+  }
+
+  Future<String> createLoan(Loan loan) async {
+    final id = await _repo.insertLoan(loan);
+    await loadLoans();
+    await setActiveLoan(id);
+    return id;
+  }
+
   Future<void> closePaidLoan(String id) async {
-    await _db.deleteLoan(id);
+    await _repo.deleteLoan(id);
     if (_activeLoan?.id == id) _activeLoan = null;
-    _loans = await _db.getAllLoans();
-    // Switch to the first remaining loan (if any)
+    _loans = await _repo.getAllLoans();
     if (_loans.isNotEmpty) {
       await setActiveLoan(_loans.first.id);
     } else {
@@ -62,42 +121,40 @@ class LoanProvider extends ChangeNotifier {
     _refreshWidget();
   }
 
-  Future<void> setActiveLoan(String id) async {
-    _activeLoan = await _db.getLoan(id);
-    if (_activeLoan != null) {
-      _totalPaid = await _db.getTotalPaid(id);
-      _recentPayments = await _db.getPaymentsForLoan(id);
+  Future<void> hideLoan(String id) async {
+    await _repo.setLoanHidden(id, true);
+    if (_activeLoan?.id == id) _activeLoan = null;
+    _loans = await _repo.getAllLoans();
+    final visible = _loans.where((l) => !l.isHidden).toList();
+    if (_activeLoan == null && visible.isNotEmpty) {
+      await setActiveLoan(visible.first.id);
     } else {
       _totalPaid = 0;
       _recentPayments = [];
+      notifyListeners();
     }
-    notifyListeners();
     _refreshWidget();
   }
 
-  Future<String> createLoan(Loan loan) async {
-    final id = await _db.insertLoan(loan);
-    await loadLoans();
-    await setActiveLoan(id);
-    return id;
+  Future<void> unhideLoan(String id) async {
+    await _repo.setLoanHidden(id, false);
+    _loans = await _repo.getAllLoans();
+    notifyListeners();
   }
 
-  Future<void> deleteLoan(String id) async {
-    await _db.deleteLoan(id);
-    if (_activeLoan?.id == id) _activeLoan = null;
-    await loadLoans();
-  }
+  List<Loan> get visibleLoans => _loans.where((l) => !l.isHidden).toList();
+  List<Loan> get hiddenLoans => _loans.where((l) => l.isHidden).toList();
 
   Future<bool> addPayment(Payment payment) async {
     try {
-      await _db.insertPayment(payment);
+      await _repo.insertPayment(payment);
     } on StateError {
       return false;
     }
     if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     } else {
-      _recentPayments = await _db.getAllPayments();
+      _recentPayments = await _repo.getAllPayments();
       notifyListeners();
       _refreshWidget();
     }
@@ -105,7 +162,7 @@ class LoanProvider extends ChangeNotifier {
   }
 
   Future<void> deletePayment(String id) async {
-    await _db.deletePayment(id);
+    await _repo.deletePayment(id);
     if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     }
@@ -127,7 +184,6 @@ class LoanProvider extends ChangeNotifier {
     return rem < 0 ? 0 : rem;
   }
 
-  /// Is today's payment done?
   bool get todayPaid {
     final today = DateTime.now();
     return _recentPayments.any((p) =>
@@ -136,13 +192,7 @@ class LoanProvider extends ChangeNotifier {
         p.paidAt.day == today.day);
   }
 
-  /// Intelligent daily payment recommendation based on remaining balance
-  /// and days until due. Returns null if no active loan.
-  ///
-  /// Example: 10 days left, Ksh 2000 remaining → recommends Ksh 200/day.
-  /// Example: 15 days left, Ksh 2000 remaining → recommends Ksh 150/day.
-  /// Example: 3 days left, Ksh 2000 remaining → recommends Ksh 700/day
-  ///          (critical severity).
+  /// Intelligent daily payment recommendation.
   DailyPaymentRecommendation? get dailyRecommendation {
     final loan = _activeLoan;
     if (loan == null) return null;
@@ -152,7 +202,6 @@ class LoanProvider extends ChangeNotifier {
     );
   }
 
-  /// Push loan summary to SharedPreferences for the native home-screen widget.
   Future<void> _refreshWidget() async {
     try {
       await _widget.update(

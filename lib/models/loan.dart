@@ -15,6 +15,7 @@ class Loan {
   final String? lenderName;
   final String? lenderPhone; // E.164 or local, e.g. +254712345678 or 0712345678
   final String? lenderEmail;
+  final bool isHidden; // hidden loans don't show in the switcher/dashboard
 
   Loan({
     required this.id,
@@ -31,6 +32,7 @@ class Loan {
     this.lenderName,
     this.lenderPhone,
     this.lenderEmail,
+    this.isHidden = false,
   });
 
   double get totalPayable {
@@ -92,6 +94,7 @@ class Loan {
       'lender_name': lenderName,
       'lender_phone': lenderPhone,
       'lender_email': lenderEmail,
+      'is_hidden': isHidden ? 1 : 0,
     };
   }
 
@@ -112,6 +115,7 @@ class Loan {
       lenderName: m['lender_name'] as String?,
       lenderPhone: m['lender_phone'] as String?,
       lenderEmail: m['lender_email'] as String?,
+      isHidden: (m['is_hidden'] as int? ?? 0) == 1,
     );
   }
 }

@@ -2,27 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/loan_provider.dart';
 import 'providers/theme_provider.dart';
+import 'repositories/loan_repository.dart';
+import 'services/database_service.dart';
 import 'services/daily_payment_calculator.dart';
 import 'services/notification_service.dart';
+import 'screens/create_loan_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/manual_payment_screen.dart';
+import 'screens/mpesa_paste_screen.dart';
 import 'theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Init notifications
+  // ---- Dependency injection (no global singletons) ----
+  final databaseService = DatabaseService();
+  final repository = LoanRepository(databaseService);
+
+  // ---- Init notifications ----
   await NotificationService().init();
   await NotificationService().requestPermissions();
 
-  // Load saved theme preference (defaults to system)
+  // ---- Load saved theme preference ----
   final themeProvider = ThemeProvider();
   await themeProvider.load();
 
-  // Load any existing loans
-  final loanProvider = LoanProvider();
+  // ---- Load loans via repository ----
+  final loanProvider = LoanProvider(repository: repository);
   await loanProvider.loadLoans();
 
-  // Schedule daily reminder with the intelligent recommendation
+  // ---- Schedule daily reminder with the intelligent recommendation ----
   if (loanProvider.activeLoan != null) {
     final rec = loanProvider.dailyRecommendation;
     final isCritical = rec?.severity == RecommendationSeverity.critical ||
@@ -55,7 +64,6 @@ class LoanTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
 
-    // Map our AppThemeMode enum to Flutter's ThemeMode
     final ThemeMode flutterMode;
     switch (themeProvider.mode) {
       case AppThemeMode.light:
@@ -76,6 +84,31 @@ class LoanTrackerApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: flutterMode,
       home: const HomeScreen(),
+
+      // ---- Named routes ----
+      // Use Navigator.pushNamed(context, '/mpesa') instead of
+      // Navigator.push(MaterialPageRoute(...)) for cleaner navigation.
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/create-loan':
+            return MaterialPageRoute(
+              builder: (_) => const CreateLoanScreen(),
+              settings: settings,
+            );
+          case '/manual':
+            return MaterialPageRoute(
+              builder: (_) => const ManualPaymentScreen(),
+              settings: settings,
+            );
+          case '/mpesa':
+            return MaterialPageRoute(
+              builder: (_) => const MpesaPasteScreen(),
+              settings: settings,
+            );
+          default:
+            return null;
+        }
+      },
     );
   }
 }

@@ -19,7 +19,7 @@ class DatabaseService {
     final path = p.join(dbPath, 'loan_tracker.db');
     _db = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onOpen: (db) async {
@@ -45,7 +45,8 @@ class DatabaseService {
         keyword TEXT,
         lender_name TEXT,
         lender_phone TEXT,
-        lender_email TEXT
+        lender_email TEXT,
+        is_hidden INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -131,6 +132,15 @@ class DatabaseService {
         await db.execute('ALTER TABLE payments ADD COLUMN account TEXT');
       }
     }
+
+    if (oldVersion < 6) {
+      // Add is_hidden column to loans (hide paid/closed loans from the
+      // dashboard + loan switcher without deleting them)
+      if (!colNames.contains('is_hidden')) {
+        await db.execute(
+            'ALTER TABLE loans ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0');
+      }
+    }
   }
 
   // ---- Loan CRUD ----
@@ -152,6 +162,7 @@ class DatabaseService {
       lenderName: loan.lenderName,
       lenderPhone: loan.lenderPhone,
       lenderEmail: loan.lenderEmail,
+      isHidden: loan.isHidden,
     );
     await db.insert('loans', toSave.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
@@ -174,6 +185,14 @@ class DatabaseService {
   Future<void> deleteLoan(String id) async {
     final db = await database;
     await db.delete('loans', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// Toggle the hidden state of a loan (hide from dashboard / switcher
+  /// without deleting the loan or its payment history).
+  Future<void> setLoanHidden(String id, bool hidden) async {
+    final db = await database;
+    await db.update('loans', {'is_hidden': hidden ? 1 : 0},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   // ---- Payment CRUD ----

@@ -139,7 +139,123 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           actions: [
-            // Theme toggle — quick cycle through system/light/dark
+            // Loan switcher — visible right on the home screen
+            if (provider.visibleLoans.length > 1)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.swap_horiz),
+                tooltip: 'Switch loan',
+                onSelected: (loanId) async {
+                  await provider.setActiveLoan(loanId);
+                },
+                itemBuilder: (ctx) {
+                  final visible = provider.visibleLoans;
+                  final hidden = provider.hiddenLoans;
+                  final items = <PopupMenuEntry<String>>[];
+
+                  for (final loan in visible) {
+                    items.add(PopupMenuItem<String>(
+                      value: loan.id,
+                      child: Row(
+                        children: [
+                          Icon(
+                            loan.id == provider.activeLoan?.id
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 18,
+                            color: loan.id == provider.activeLoan?.id
+                                ? Theme.of(ctx).colorScheme.primary
+                                : Theme.of(ctx).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(loan.title,
+                                    style: TextStyle(
+                                        fontWeight:
+                                            loan.id == provider.activeLoan?.id
+                                                ? FontWeight.w700
+                                                : FontWeight.w500)),
+                                Text(
+                                    'Ksh ${loan.principal.toStringAsFixed(0)} • due ${loan.dueDate.day}/${loan.dueDate.month}',
+                                    style: Theme.of(ctx).textTheme.bodySmall),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.visibility_off_outlined,
+                                size: 16,
+                                color: Theme.of(ctx)
+                                    .colorScheme
+                                    .onSurfaceVariant),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              provider.hideLoan(loan.id);
+                            },
+                            tooltip: 'Hide',
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ],
+                      ),
+                    ));
+                  }
+
+                  if (hidden.isNotEmpty) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      child: Text('HIDDEN',
+                          style: Theme.of(ctx).textTheme.labelSmall),
+                    ),
+                    for (final loan in hidden)
+                      PopupMenuItem<String>(
+                        value: loan.id,
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility_off_outlined,
+                                size: 16,
+                                color: Theme.of(ctx)
+                                    .colorScheme
+                                    .onSurfaceVariant),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(loan.title,
+                                      style: TextStyle(
+                                          color: Theme.of(ctx)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                          decoration:
+                                              TextDecoration.lineThrough)),
+                                  Text(
+                                      'Ksh ${loan.principal.toStringAsFixed(0)}',
+                                      style: Theme.of(ctx).textTheme.bodySmall),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.visibility_outlined,
+                                  size: 16,
+                                  color: Theme.of(ctx).colorScheme.primary),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                provider.unhideLoan(loan.id);
+                              },
+                              tooltip: 'Unhide',
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                      ),
+                  ];
+
+                  return items;
+                },
+              ),
+            // Theme toggle
             IconButton(
               icon: Icon(_themeIcon(context)),
               tooltip: 'Toggle theme',

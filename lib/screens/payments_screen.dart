@@ -31,52 +31,135 @@ class PaymentsScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Loan switcher — popup menu of all loans
-          if (loans.length > 1)
+          // Loan switcher — popup menu of all visible loans + hidden section
+          if (loans.isNotEmpty)
             PopupMenuButton<String>(
               icon: const Icon(Icons.swap_horiz),
               tooltip: 'Switch loan',
               onSelected: (loanId) async {
+                final provider = context.read<LoanProvider>();
                 await provider.setActiveLoan(loanId);
               },
-              itemBuilder: (ctx) => loans
-                  .map((loan) => PopupMenuItem<String>(
-                        value: loan.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              loan.id == activeLoan?.id
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_unchecked,
-                              size: 18,
-                              color: loan.id == activeLoan?.id
-                                  ? Theme.of(ctx).colorScheme.primary
-                                  : Theme.of(ctx).colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    loan.title,
-                                    style: TextStyle(
-                                      fontWeight: loan.id == activeLoan?.id
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Ksh ${loan.principal.toStringAsFixed(0)} • due ${loan.dueDate.day}/${loan.dueDate.month}',
-                                    style: Theme.of(ctx).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+              itemBuilder: (ctx) {
+                final visible = provider.visibleLoans;
+                final hidden = provider.hiddenLoans;
+                final items = <PopupMenuEntry<String>>[];
+
+                // Visible loans
+                for (final loan in visible) {
+                  items.add(PopupMenuItem<String>(
+                    value: loan.id,
+                    child: Row(
+                      children: [
+                        Icon(
+                          loan.id == activeLoan?.id
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
+                          size: 18,
+                          color: loan.id == activeLoan?.id
+                              ? Theme.of(ctx).colorScheme.primary
+                              : Theme.of(ctx).colorScheme.onSurfaceVariant,
                         ),
-                      ))
-                  .toList(),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loan.title,
+                                style: TextStyle(
+                                  fontWeight: loan.id == activeLoan?.id
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                'Ksh ${loan.principal.toStringAsFixed(0)} • due ${loan.dueDate.day}/${loan.dueDate.month}',
+                                style: Theme.of(ctx).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Hide button
+                        IconButton(
+                          icon: Icon(Icons.visibility_off_outlined,
+                              size: 16,
+                              color:
+                                  Theme.of(ctx).colorScheme.onSurfaceVariant),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            context.read<LoanProvider>().hideLoan(loan.id);
+                          },
+                          tooltip: 'Hide this loan',
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
+                  ));
+                }
+
+                // Hidden loans section
+                if (hidden.isNotEmpty) ...[
+                  const PopupMenuDivider(),
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    child: Text(
+                      'HIDDEN LOANS',
+                      style: Theme.of(ctx).textTheme.labelSmall,
+                    ),
+                  ),
+                  for (final loan in hidden)
+                    PopupMenuItem<String>(
+                      value: loan.id,
+                      child: Row(
+                        children: [
+                          Icon(Icons.visibility_off_outlined,
+                              size: 16,
+                              color: Theme.of(ctx)
+                                  .colorScheme
+                                  .onSurfaceVariant),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  loan.title,
+                                  style: TextStyle(
+                                    color: Theme.of(ctx)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                Text(
+                                  'Ksh ${loan.principal.toStringAsFixed(0)}',
+                                  style: Theme.of(ctx).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Unhide button
+                          IconButton(
+                            icon: Icon(Icons.visibility_outlined,
+                                size: 16,
+                                color: Theme.of(ctx).colorScheme.primary),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              context
+                                  .read<LoanProvider>()
+                                  .unhideLoan(loan.id);
+                            },
+                            tooltip: 'Unhide',
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ],
+                      ),
+                    ),
+                ];
+
+                return items;
+              },
             ),
           // Add new loan
           IconButton(
@@ -111,7 +194,8 @@ class PaymentsScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${loans.length} loan${loans.length == 1 ? "" : "s"}',
+                        '${provider.visibleLoans.length} loan${provider.visibleLoans.length == 1 ? "" : "s"}'
+                        '${provider.hiddenLoans.isNotEmpty ? " (${provider.hiddenLoans.length} hidden)" : ""}',
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ],

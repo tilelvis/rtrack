@@ -1,102 +1,65 @@
 import 'package:flutter/material.dart';
 
-/// Material 3 design system for LoanTracker.
+/// Apple-inspired design system for LoanTracker.
 ///
-/// Inspired by the reference screens (premium fintech, midnight navy
-/// dark mode, off-white light mode) but translated into proper
-/// Material 3 — no neon glow, no cyberpunk, no scattered hardcoded colors.
+/// Design philosophy:
+///   - Clean, large-typography surfaces with subtle blur/elevation
+///   - SF Pro-style font (Inter is the closest Google Font equivalent)
+///   - Soft, rounded corners (20-28px on cards, 14px on buttons)
+///   - Restrained color palette — system blue primary, green success,
+///     amber warning, red danger. No neon, no gradients, no cyberpunk.
+///   - Dark mode: deep charcoal (not pure black), warm-tinted surfaces
+///   - Light mode: warm off-white, card elevation via subtle shadows
 ///
-/// ARCHITECTURE
-/// ============
-/// 1. Two complete ColorSchemes (light + dark) — the source of truth.
-/// 2. A ThemeExtension<LoanTrackerDesignTokens> for LoanTracker-specific
-///    semantic colors not covered by ColorScheme (success, warning,
-///    pending, chart colors, brand accents).
-/// 3. Widgets obtain colors via:
-///       Theme.of(context).colorScheme.X           (standard M3)
-///       Theme.of(context).extension<LoanTrackerDesignTokens>()!.X  (custom)
-///    NEVER via AppTheme.X directly.
-///
-/// COLOR PHILOSOPHY
-/// ================
-/// - Primary: cyan/blue (interaction, navigation selection, links)
-/// - Secondary: magenta (ACCENT ONLY — never the dominant color)
-/// - Tertiary: green (positive financial progress, successful payments)
-/// - Error: red (overdue, destructive)
-/// - Surface: navy (dark) / off-white (light)
-///
-/// Dark mode is "premium midnight fintech" — deep navy, not pure black.
-/// Light mode is "premium banking app" — off-white, soft elevation.
+/// Architecture:
+///   1. Two complete ColorSchemes (light + dark) — the source of truth
+///   2. ThemeExtension<LoanTrackerDesignTokens> for semantic colors
+///   3. Widgets obtain colors via Theme.of(context).colorScheme.X
+///      or Theme.of(context).extension<LoanTrackerDesignTokens>()!.X
 class AppTheme {
   AppTheme._();
 
-  // ===========================================================================
-  // SEMANTIC BRAND COLORS — used by both ColorScheme and DesignTokens
-  // ===========================================================================
+  // ---- Apple-style brand colors ----
+  static const Color _primaryLight = Color(0xFF007AFF);  // Apple systemBlue
+  static const Color _primaryDark = Color(0xFF0A84FF);
 
-  // Primary: cyan/blue — interaction color
-  static const Color _primaryLight = Color(0xFF0064A8);   // strong blue on light bg
-  static const Color _primaryDark = Color(0xFF62B5E8);    // soft cyan on dark bg
+  static const Color _secondaryLight = Color(0xFFFF2D55);  // Apple systemPink
+  static const Color _secondaryDark = Color(0xFFFF375F);
 
-  // Secondary: magenta/pink — accent only
-  static const Color _secondaryLight = Color(0xFF9C2D5C);
-  static const Color _secondaryDark = Color(0xFFFFB0D0);
+  static const Color _tertiaryLight = Color(0xFF34C759);  // Apple systemGreen
+  static const Color _tertiaryDark = Color(0xFF30D158);
 
-  // Tertiary: green — positive financial progress
-  static const Color _tertiaryLight = Color(0xFF1F7A3D);
-  static const Color _tertiaryDark = Color(0xFF7DD9A1);
+  static const Color _errorLight = Color(0xFFFF3B30);  // Apple systemRed
+  static const Color _errorDark = Color(0xFFFF453A);
 
-  // Error: red — destructive / overdue
-  static const Color _errorLight = Color(0xFFBA1A1A);
-  static const Color _errorDark = Color(0xFFFFB4AB);
+  // ---- Dark mode: warm charcoal (not pure black) ----
+  static const Color _darkBg = Color(0xFF000000);        // Apple true black
+  static const Color _darkSurface = Color(0xFF1C1C1E);  // Apple systemBackground secondary
+  static const Color _darkSurfaceContainer = Color(0xFF2C2C2E); // tertiary
+  static const Color _darkSurfaceHigh = Color(0xFF3A3A3C); // elevated
+  static const Color _darkBorder = Color(0xFF38383A);
+  static const Color _darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color _darkTextSecondary = Color(0xFF8E8E93); // Apple secondaryLabel
 
-  // ===========================================================================
-  // DARK MODE — "premium midnight fintech"
-  // Deep navy background (NOT pure black), elevated navy surfaces.
-  // ===========================================================================
-  static const Color _darkBg = Color(0xFF0B1120);          // deep midnight navy
-  static const Color _darkSurface = Color(0xFF131C2E);    // elevated navy
-  static const Color _darkSurfaceContainer = Color(0xFF1A2540); // grouped content
-  static const Color _darkSurfaceHigh = Color(0xFF223052);    // highest elevation
-  static const Color _darkBorder = Color(0xFF2A3858);      // subtle navy border
-  static const Color _darkTextPrimary = Color(0xFFEAF0FB);  // near-white
-  static const Color _darkTextSecondary = Color(0xFF9BA8C6); // muted blue-gray
+  // ---- Light mode: warm off-white ----
+  static const Color _lightBg = Color(0xFFF2F2F7);   // Apple systemGroupedBackground
+  static const Color _lightSurface = Color(0xFFFFFFFF);
+  static const Color _lightSurfaceContainer = Color(0xFFF2F2F7);
+  static const Color _lightSurfaceHigh = Color(0xFFE5E5EA);
+  static const Color _lightBorder = Color(0xFFC6C6C8);
+  static const Color _lightTextPrimary = Color(0xFF000000);
+  static const Color _lightTextSecondary = Color(0xFF3C3C43); // Apple secondaryLabel (50% opacity feel)
 
-  // ===========================================================================
-  // LIGHT MODE — "premium banking app"
-  // Off-white background, white surfaces, subtle cool-gray borders.
-  // ===========================================================================
-  static const Color _lightBg = Color(0xFFF4F6FB);        // very light cool gray
-  static const Color _lightSurface = Color(0xFFFFFFFF);   // pure white
-  static const Color _lightSurfaceContainer = Color(0xFFEFF2F8);
-  static const Color _lightSurfaceHigh = Color(0xFFE6EAF2);
-  static const Color _lightBorder = Color(0xFFD8DEE8);    // subtle cool gray
-  static const Color _lightTextPrimary = Color(0xFF0F1B2D);  // deep navy
-  static const Color _lightTextSecondary = Color(0xFF5A6B85); // slate
+  // ---- LoanTracker-specific semantic tokens ----
+  static const Color _warningLight = Color(0xFFFF9500);  // Apple systemOrange
+  static const Color _warningDark = Color(0xFFFF9F0A);
 
-  // ===========================================================================
-  // LOANTRACKER-SPECIFIC SEMANTIC TOKENS
-  // These are NOT in ColorScheme, so they live in ThemeExtension.
-  // ===========================================================================
+  static const Color _chartPaidLight = Color(0xFF34C759);
+  static const Color _chartPaidDark = Color(0xFF30D158);
+  static const Color _chartTargetLight = Color(0xFF007AFF);
+  static const Color _chartTargetDark = Color(0xFF0A84FF);
 
-  // Warning: amber — pending / due soon / attention
-  static const Color _warningLight = Color(0xFFB45300);
-  static const Color _warningDark = Color(0xFFFFB877);
-
-  // Chart palette
-  static const Color _chartPaidLight = Color(0xFF1F7A3D);   // emerald
-  static const Color _chartPaidDark = Color(0xFF7DD9A1);
-  static const Color _chartTargetLight = Color(0xFF0064A8);  // dashed target line
-  static const Color _chartTargetDark = Color(0xFF62B5E8);
-
-  // ===========================================================================
-  // LIGHT ColorScheme
-  // ===========================================================================
   static ThemeData get light => _build(Brightness.light);
-
-  // ===========================================================================
-  // DARK ColorScheme
-  // ===========================================================================
   static ThemeData get dark => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
@@ -105,40 +68,40 @@ class AppTheme {
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: isLight ? _primaryLight : _primaryDark,
-      onPrimary: isLight ? Colors.white : const Color(0xFF002A47),
+      onPrimary: Colors.white,
       primaryContainer: isLight
-          ? const Color(0xFFD5E3FF)
-          : const Color(0xFF004A75),
+          ? const Color(0xFFE3F0FF)
+          : const Color(0xFF003B66),
       onPrimaryContainer: isLight
-          ? const Color(0xFF001D36)
-          : const Color(0xFFC7E5FF),
+          ? const Color(0xFF002B4D)
+          : const Color(0xFFB3DAFF),
       secondary: isLight ? _secondaryLight : _secondaryDark,
-      onSecondary: isLight ? Colors.white : const Color(0xFF56162E),
+      onSecondary: Colors.white,
       secondaryContainer: isLight
-          ? const Color(0xFFFFD8E5)
-          : const Color(0xFF7A2D52),
+          ? const Color(0xFFFFE0EC)
+          : const Color(0xFF661A33),
       onSecondaryContainer: isLight
-          ? const Color(0xFF3E0720)
-          : const Color(0xFFFFD8E5),
+          ? const Color(0xFF330011)
+          : const Color(0xFFFFD6E0),
       tertiary: isLight ? _tertiaryLight : _tertiaryDark,
-      onTertiary: isLight ? Colors.white : const Color(0xFF00391C),
+      onTertiary: Colors.white,
       tertiaryContainer: isLight
-          ? const Color(0xFFB4EFC2)
-          : const Color(0xFF1E5232),
+          ? const Color(0xFFD6F5DC)
+          : const Color(0xFF1A4D2E),
       onTertiaryContainer: isLight
-          ? const Color(0xFF00210F)
-          : const Color(0xFFB4EFC2),
+          ? const Color(0xFF003311)
+          : const Color(0xFFB4F0C4),
       error: isLight ? _errorLight : _errorDark,
-      onError: isLight ? Colors.white : const Color(0xFF690005),
+      onError: Colors.white,
       errorContainer: isLight
-          ? const Color(0xFFFFDAD6)
-          : const Color(0xFF93000A),
+          ? const Color(0xFFFFE0E0)
+          : const Color(0xFF660000),
       onErrorContainer: isLight
-          ? const Color(0xFF410002)
-          : const Color(0xFFFFDAD6),
+          ? const Color(0xFF330000)
+          : const Color(0xFFFFB4B4),
       surface: isLight ? _lightSurface : _darkSurface,
       onSurface: isLight ? _lightTextPrimary : _darkTextPrimary,
-      surfaceContainerLowest: isLight ? Colors.white : const Color(0xFF060B14),
+      surfaceContainerLowest: isLight ? Colors.white : Colors.black,
       surfaceContainerLow: isLight ? _lightSurface : _darkSurface,
       surfaceContainer: isLight
           ? _lightSurfaceContainer
@@ -147,16 +110,16 @@ class AppTheme {
           ? _lightSurfaceHigh
           : _darkSurfaceHigh,
       surfaceContainerHighest: isLight
-          ? const Color(0xFFDDE3EE)
-          : const Color(0xFF2C3A5E),
+          ? const Color(0xFFD1D1D6)
+          : const Color(0xFF48484A),
       onSurfaceVariant: isLight
           ? _lightTextSecondary
           : _darkTextSecondary,
       outline: isLight ? _lightBorder : _darkBorder,
       outlineVariant: isLight
-          ? const Color(0xFFC2C8D2)
-          : const Color(0xFF444B66),
-      shadow: isLight ? const Color(0xFF000000) : Colors.black,
+          ? const Color(0xFFE5E5EA)
+          : const Color(0xFF2C2C2E),
+      shadow: Colors.black,
       scrim: Colors.black,
       inverseSurface: isLight ? _darkSurface : _lightSurface,
       onInverseSurface: isLight ? _darkTextPrimary : _lightTextPrimary,
@@ -169,268 +132,184 @@ class AppTheme {
       scaffoldBackgroundColor: isLight ? _lightBg : _darkBg,
       canvasColor: isLight ? _lightBg : _darkBg,
       visualDensity: VisualDensity.standard,
+      // Apple apps feel "spread out" — slightly less dense than Material default
+      materialTapTargetSize: MaterialTapTargetSize.padded,
     );
 
+    // Use bundled Inter font (closest to SF Pro available on all platforms)
+    TextStyle _font(double size, FontWeight weight, Color color,
+        {double letterSpacing = 0}) {
+      return TextStyle(
+        fontFamily: 'Inter',
+        fontSize: size,
+        fontWeight: weight,
+        letterSpacing: letterSpacing,
+        color: color,
+      );
+    }
+
     return base.copyWith(
-      // ---- Typography ----
-      // JetBrains Mono for headings, labels, and figures (gives LoanTracker
-      // a distinctive technical/fintech identity with tabular figures that
-      // align nicely in financial displays).
-      // Inter remains for body text (better paragraph readability).
-      // Both fonts are bundled in assets/fonts/ (declared in pubspec.yaml)
-      // so they work OFFLINE without depending on google_fonts runtime fetch.
       textTheme: base.textTheme.copyWith(
-        displayLarge: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 36,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
-          color: colorScheme.onSurface,
-        ),
-        displayMedium: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 28,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.25,
-          color: colorScheme.onSurface,
-        ),
-        displaySmall: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-          color: colorScheme.onSurface,
-        ),
-        headlineMedium: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-          color: colorScheme.onSurface,
-        ),
-        headlineSmall: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurface,
-        ),
-        titleLarge: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurface,
-        ),
-        titleMedium: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-        titleSmall: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: colorScheme.onSurface,
-        ),
-        bodyLarge: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: colorScheme.onSurface,
-        ),
-        bodyMedium: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        bodySmall: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        labelLarge: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          color: colorScheme.onSurface,
-        ),
-        labelMedium: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        labelSmall: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.0,
-          color: colorScheme.onSurfaceVariant,
-        ),
+        displayLarge: _font(36, FontWeight.w800, colorScheme.onSurface, letterSpacing: -0.5),
+        displayMedium: _font(28, FontWeight.w700, colorScheme.onSurface, letterSpacing: -0.25),
+        displaySmall: _font(24, FontWeight.w700, colorScheme.onSurface),
+        headlineMedium: _font(20, FontWeight.w700, colorScheme.onSurface),
+        headlineSmall: _font(18, FontWeight.w600, colorScheme.onSurface),
+        titleLarge: _font(22, FontWeight.w700, colorScheme.onSurface, letterSpacing: -0.25),
+        titleMedium: _font(17, FontWeight.w600, colorScheme.onSurface),
+        titleSmall: _font(15, FontWeight.w600, colorScheme.onSurface),
+        bodyLarge: _font(17, FontWeight.w400, colorScheme.onSurface),
+        bodyMedium: _font(15, FontWeight.w400, colorScheme.onSurfaceVariant),
+        bodySmall: _font(13, FontWeight.w400, colorScheme.onSurfaceVariant),
+        labelLarge: _font(15, FontWeight.w600, colorScheme.onSurface, letterSpacing: 0.1),
+        labelMedium: _font(12, FontWeight.w600, colorScheme.onSurfaceVariant, letterSpacing: 0.1),
+        labelSmall: _font(11, FontWeight.w600, colorScheme.onSurfaceVariant, letterSpacing: 0.4),
       ),
 
-      // ---- App Bar — flat, no elevation, surface-tinted ----
+      // ---- App Bar — large title style (Apple-like) ----
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
+        backgroundColor: isLight ? _lightBg : _darkBg,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        scrolledUnderElevation: 0.5,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurface,
-        ),
+        titleTextStyle: _font(34, FontWeight.w800, colorScheme.onSurface, letterSpacing: -0.5),
+        toolbarTextStyle: _font(17, FontWeight.w600, colorScheme.onSurface),
       ),
 
-      // ---- Cards — Material 3 outlined / filled variants ----
+      // ---- Cards — soft, rounded, no visible border (Apple style) ----
       cardTheme: CardThemeData(
-        color: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
+        color: isLight ? _lightSurface : _darkSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colorScheme.outlineVariant, width: 0.5),
         ),
       ),
 
-      // ---- Inputs ----
+      // ---- Inputs — rounded, filled ----
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHigh,
-        hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+        fillColor: isLight ? _lightSurfaceContainer : _darkSurfaceContainer,
+        hintStyle: _font(17, FontWeight.w400, colorScheme.onSurfaceVariant),
+        labelStyle: _font(15, FontWeight.w500, colorScheme.onSurfaceVariant),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.error),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colorScheme.primary, width: 2),
         ),
       ),
 
-      // ---- Buttons — Material 3 hierarchy ----
+      // ---- Buttons — Apple-style rounded rectangles ----
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          minimumSize: const Size(0, 52),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(0, 50),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
+          textStyle: _font(17, FontWeight.w600, Colors.white),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
+          foregroundColor: Colors.white,
           elevation: 0,
-          minimumSize: const Size(0, 52),
+          minimumSize: const Size(0, 50),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
+          textStyle: _font(17, FontWeight.w600, Colors.white),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.outline),
-          minimumSize: const Size(0, 52),
+          side: BorderSide(color: colorScheme.outline, width: 0.5),
+          minimumSize: const Size(0, 50),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+          textStyle: _font(17, FontWeight.w600, colorScheme.primary),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          textStyle: TextStyle(fontFamily: "JetBrainsMono", 
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
+          textStyle: _font(17, FontWeight.w400, colorScheme.primary),
         ),
       ),
 
-      // ---- FAB ----
+      // ---- FAB — rounded ----
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        extendedTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
-          fontWeight: FontWeight.w700,
-          fontSize: 14,
-        ),
-      ),
-
-      // ---- Chips — Material 3 tonal ----
-      chipTheme: ChipThemeData(
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        labelStyle: TextStyle(color: colorScheme.onSurface),
-        side: BorderSide(color: colorScheme.outline, width: 0.5),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
+        ),
+        extendedTextStyle: _font(15, FontWeight.w600, Colors.white),
+      ),
+
+      // ---- Chips — Apple pill style ----
+      chipTheme: ChipThemeData(
+        backgroundColor: isLight ? _lightSurfaceContainer : _darkSurfaceContainer,
+        labelStyle: _font(13, FontWeight.w600, colorScheme.onSurface),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
         ),
         selectedColor: colorScheme.primaryContainer,
       ),
 
-      // ---- Navigation Bar — Material 3 ----
+      // ---- Navigation Bar — Apple tab bar style ----
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
+        backgroundColor: isLight
+            ? _lightSurface.withValues(alpha: 0.9)
+            : _darkSurface.withValues(alpha: 0.9),
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         height: 72,
-        indicatorColor: colorScheme.primaryContainer,
+        indicatorColor: Colors.transparent, // Apple doesn't use indicator pills
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return TextStyle(fontFamily: "JetBrainsMono", 
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: selected
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSurfaceVariant,
-          );
+          return _font(10, FontWeight.w600,
+              selected ? colorScheme.primary : colorScheme.onSurfaceVariant);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected
-                ? colorScheme.onPrimaryContainer
-                : colorScheme.onSurfaceVariant,
-            size: 22,
+            color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+            size: 24,
           );
         }),
       ),
 
-      // ---- ProgressIndicator — uses tertiary (green) for repayment progress ----
+      // ---- ProgressIndicator — Apple blue ----
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colorScheme.tertiary,
-        linearTrackColor: colorScheme.surfaceContainerHigh,
-        circularTrackColor: colorScheme.surfaceContainerHigh,
+        linearTrackColor: isLight ? _lightSurfaceHigh : _darkSurfaceHigh,
+        circularTrackColor: isLight ? _lightSurfaceHigh : _darkSurfaceHigh,
       ),
 
       // ---- Divider ----
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant,
+        color: isLight ? _lightBorder : _darkBorder,
         thickness: 0.5,
         space: 1,
       ),
@@ -438,40 +317,34 @@ class AppTheme {
       // ---- Snackbar ----
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
+        backgroundColor: isLight ? _lightTextPrimary : _darkTextPrimary,
+        contentTextStyle: _font(15, FontWeight.w500,
+            isLight ? _lightSurface : _darkSurface),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
 
-      // ---- Dialog ----
+      // ---- Dialog — Apple alert style ----
       dialogTheme: DialogThemeData(
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
+        backgroundColor: isLight ? _lightSurface : _darkSurface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
-        titleTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.onSurface,
-        ),
-        contentTextStyle: TextStyle(fontFamily: "JetBrainsMono", 
-          fontSize: 14,
-          color: colorScheme.onSurfaceVariant,
-        ),
+        titleTextStyle: _font(17, FontWeight.w700, colorScheme.onSurface),
+        contentTextStyle: _font(13, FontWeight.w400, colorScheme.onSurfaceVariant),
       ),
 
-      // ---- BottomSheet ----
+      // ---- BottomSheet — Apple modal sheet style ----
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colorScheme.surface,
-        surfaceTintColor: colorScheme.surfaceTint,
-        modalBackgroundColor: colorScheme.surface,
+        backgroundColor: isLight ? _lightSurface : _darkSurface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: isLight ? _lightSurface : _darkSurface,
         modalElevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
 
@@ -479,8 +352,10 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         iconColor: colorScheme.primary,
         textColor: colorScheme.onSurface,
+        titleTextStyle: _font(17, FontWeight.w400, colorScheme.onSurface),
+        subtitleTextStyle: _font(13, FontWeight.w400, colorScheme.onSurfaceVariant),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
       ),
 
@@ -491,92 +366,69 @@ class AppTheme {
     );
   }
 
-  // ===========================================================================
-  // LOANTRACKER DESIGN TOKENS — ThemeExtension
-  // ===========================================================================
   static final LoanTrackerDesignTokens _lightDesignTokens =
       LoanTrackerDesignTokens(
     brightness: Brightness.light,
-    // Semantic statuses
     success: _tertiaryLight,
     onSuccess: Colors.white,
-    successContainer: const Color(0xFFB4EFC2),
-    onSuccessContainer: const Color(0xFF00210F),
+    successContainer: const Color(0xFFD6F5DC),
+    onSuccessContainer: const Color(0xFF003311),
     warning: _warningLight,
     onWarning: Colors.white,
-    warningContainer: const Color(0xFFFFE0B0),
-    onWarningContainer: const Color(0xFF3D1F00),
+    warningContainer: const Color(0xFFFFE8CC),
+    onWarningContainer: const Color(0xFF4D2600),
     danger: _errorLight,
     onDanger: Colors.white,
-    dangerContainer: const Color(0xFFFFDAD6),
-    onDangerContainer: const Color(0xFF410002),
-    // Brand accents
+    dangerContainer: const Color(0xFFFFE0E0),
+    onDangerContainer: const Color(0xFF330000),
     brandPrimary: _primaryLight,
     brandAccent: _secondaryLight,
     brandSuccess: _tertiaryLight,
-    // Charts
     chartPaid: _chartPaidLight,
     chartTarget: _chartTargetLight,
-    chartGrid: const Color(0xFFE0E5EE),
-    // Surfaces (extra levels beyond ColorScheme)
-    brandSurface: const Color(0xFFF0F7FF),     // very pale blue (hero card)
-    successSurface: const Color(0xFFE8F7ED),  // pale green
-    warningSurface: const Color(0xFFFFF4E0),  // pale amber
-    dangerSurface: const Color(0xFFFFEDEA),   // pale red
-    accentSurface: const Color(0xFFFFE6F0),   // pale pink
-    neutralSurface: const Color(0xFFEFF2F8),  // pale gray
+    chartGrid: const Color(0xFFE5E5EA),
+    brandSurface: const Color(0xFFE3F0FF),
+    successSurface: const Color(0xFFE8F7ED),
+    warningSurface: const Color(0xFFFFF4E0),
+    dangerSurface: const Color(0xFFFFEDEA),
+    accentSurface: const Color(0xFFFFE6F0),
+    neutralSurface: const Color(0xFFF2F2F7),
   );
 
   static final LoanTrackerDesignTokens _darkDesignTokens =
       LoanTrackerDesignTokens(
     brightness: Brightness.dark,
-    // Semantic statuses
     success: _tertiaryDark,
-    onSuccess: const Color(0xFF00391C),
-    successContainer: const Color(0xFF1E5232),
-    onSuccessContainer: const Color(0xFFB4EFC2),
+    onSuccess: const Color(0xFF003311),
+    successContainer: const Color(0xFF1A4D2E),
+    onSuccessContainer: const Color(0xFFB4F0C4),
     warning: _warningDark,
-    onWarning: const Color(0xFF4A2800),
-    warningContainer: const Color(0xFF5A3D0E),
-    onWarningContainer: const Color(0xFFFFE0B0),
+    onWarning: const Color(0xFF4D2600),
+    warningContainer: const Color(0xFF4D3000),
+    onWarningContainer: const Color(0xFFFFE8CC),
     danger: _errorDark,
-    onDanger: const Color(0xFF690005),
-    dangerContainer: const Color(0xFF93000A),
-    onDangerContainer: const Color(0xFFFFDAD6),
-    // Brand accents
+    onDanger: const Color(0xFF660000),
+    dangerContainer: const Color(0xFF4D0000),
+    onDangerContainer: const Color(0xFFFFB4B4),
     brandPrimary: _primaryDark,
     brandAccent: _secondaryDark,
     brandSuccess: _tertiaryDark,
-    // Charts
     chartPaid: _chartPaidDark,
     chartTarget: _chartTargetDark,
-    chartGrid: const Color(0xFF2A3858),
-    // Surfaces (extra levels beyond ColorScheme)
-    brandSurface: const Color(0xFF0F1F36),     // tinted hero card
-    successSurface: const Color(0xFF122D20),   // pale green tint
-    warningSurface: const Color(0xFF2E2310),   // pale amber tint
-    dangerSurface: const Color(0xFF2B1014),    // pale red tint
-    accentSurface: const Color(0xFF2A1424),     // pale pink tint
-    neutralSurface: const Color(0xFF1A2540),   // navy variant
+    chartGrid: const Color(0xFF38383A),
+    brandSurface: const Color(0xFF003B66),
+    successSurface: const Color(0xFF1A4D2E),
+    warningSurface: const Color(0xFF4D3000),
+    dangerSurface: const Color(0xFF4D0000),
+    accentSurface: const Color(0xFF661A33),
+    neutralSurface: const Color(0xFF2C2C2E),
   );
 }
 
-/// LoanTracker-specific design tokens, exposed via ThemeExtension.
-///
-/// Use:
-/// ```dart
-/// final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
-/// Container(color: tokens.success);
-/// ```
-///
-/// These tokens cover semantic states (success / warning / danger) and
-/// brand accents that don't fit into Material's ColorScheme.
 @immutable
 class LoanTrackerDesignTokens
     extends ThemeExtension<LoanTrackerDesignTokens> {
   final Brightness brightness;
-
-  // ---- Semantic statuses ----
   final Color success;
   final Color onSuccess;
   final Color successContainer;
@@ -589,18 +441,12 @@ class LoanTrackerDesignTokens
   final Color onDanger;
   final Color dangerContainer;
   final Color onDangerContainer;
-
-  // ---- Brand accents ----
-  final Color brandPrimary;   // cyan/blue
-  final Color brandAccent;    // magenta (use sparingly!)
-  final Color brandSuccess;   // green
-
-  // ---- Charts ----
+  final Color brandPrimary;
+  final Color brandAccent;
+  final Color brandSuccess;
   final Color chartPaid;
   final Color chartTarget;
   final Color chartGrid;
-
-  // ---- Tinted surfaces for emphasis cards ----
   final Color brandSurface;
   final Color successSurface;
   final Color warningSurface;
@@ -727,9 +573,4 @@ class LoanTrackerDesignTokens
       neutralSurface: Color.lerp(neutralSurface, other.neutralSurface, t)!,
     );
   }
-}
-
-/// Convenience accessor for the design tokens extension.
-LoanTrackerDesignTokens designTokensOf(BuildContext context) {
-  return Theme.of(context).extension<LoanTrackerDesignTokens>()!;
 }
