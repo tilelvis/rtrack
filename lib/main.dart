@@ -6,6 +6,7 @@ import 'repositories/loan_repository.dart';
 import 'services/database_service.dart';
 import 'services/daily_payment_calculator.dart';
 import 'services/notification_service.dart';
+import 'services/sms_auto_import_service.dart';
 import 'screens/create_loan_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/manual_payment_screen.dart';
@@ -45,6 +46,21 @@ void main() async {
       isCritical: isCritical,
     );
   }
+
+  // ---- Start auto-import SMS listener ----
+  // Listens for incoming M-Pesa SMS while the app is open. When a message
+  // matches the active loan's keyword (e.g. "001709" or "NCBA"), it
+  // auto-creates a payment and shows a notification.
+  await SmsAutoImportService().startListening(
+    repository: repository,
+    getActiveLoan: () => loanProvider.activeLoan,
+    onPaymentImported: (payment) {
+      // Refresh the provider so the dashboard updates immediately
+      if (loanProvider.activeLoan != null) {
+        loanProvider.setActiveLoan(loanProvider.activeLoan!.id);
+      }
+    },
+  );
 
   runApp(
     MultiProvider(
