@@ -4,7 +4,6 @@ import '../providers/loan_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/pdf_report_service.dart';
 import '../theme/app_tokens.dart';
-import '../widgets/app_components.dart';
 import '../widgets/dashboard_card.dart';
 import '../widgets/payment_history_list.dart';
 import '../widgets/payment_trend_chart.dart';

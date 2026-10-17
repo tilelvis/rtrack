@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:telephony/telephony.dart';
 import '../models/loan.dart';
 import '../models/payment.dart';
 import '../repositories/loan_repository.dart';
-import 'database_service.dart';
 import 'mpesa_parser.dart';
 import 'notification_service.dart';
 
@@ -28,7 +26,6 @@ class SmsAutoImportService {
   SmsAutoImportService._internal();
 
   final _telephony = Telephony.instance;
-  StreamSubscription<SmsMessage>? _subscription;
   bool _listening = false;
 
   /// Whether the SMS listener is currently active.
@@ -53,7 +50,7 @@ class SmsAutoImportService {
     final granted = await _ensurePermission();
     if (!granted) return;
 
-    _subscription = _telephony.listenIncomingSms(
+    _telephony.listenIncomingSms(
       onNewMessage: (SmsMessage message) async {
         final body = message.body ?? '';
         if (body.isEmpty) return;
@@ -143,8 +140,8 @@ class SmsAutoImportService {
 
   /// Stop listening for SMS.
   void stopListening() {
-    _subscription?.cancel();
-    _subscription = null;
+    // telephony doesn't expose a stop method — the listener lives for the
+    // app's lifetime. Setting _listening = false is a no-op marker.
     _listening = false;
   }
 
