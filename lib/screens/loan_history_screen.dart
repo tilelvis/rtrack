@@ -343,18 +343,26 @@ class _LoanHistoryScreenState extends State<LoanHistoryScreen> {
         paymentsByLoanId: paymentsByLoanId,
         totalPaidByLoanId: totalPaidByLoanId,
       );
+      // Capture the error color BEFORE the await so we don't reference
+      // BuildContext across an async gap. If the widget unmounted in the
+      // meantime, skip the snackbar entirely.
+      if (!mounted) return;
+      final successColor = Theme.of(context).colorScheme.primary;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Completed loans PDF ready — share or save it.'),
+        SnackBar(
+          content: const Text('Completed loans PDF ready — share or save it.'),
+          backgroundColor: successColor,
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+      final errColor = Theme.of(context).colorScheme.error;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(
           content: Text('Failed to generate PDF: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: errColor,
         ),
       );
     }
@@ -582,8 +590,12 @@ class _LoanHistoryCardState extends State<_LoanHistoryCard> {
     final loan = widget.loan;
     final paid = widget.totalPaid;
     final total = loan.totalPayable;
-    final balance = (total - paid).clamp(0, double.infinity);
-    final progress = total > 0 ? (paid / total).clamp(0.0, 1.0) : 0.0;
+    // clamp() on a double returns num, so cast explicitly to double to
+    // satisfy downstream `double` parameter sites (e.g. _buildExpanded).
+    final balance =
+        (total - paid).clamp(0.0, double.infinity).toDouble();
+    final progress =
+        (total > 0 ? (paid / total).clamp(0.0, 1.0) : 0.0).toDouble();
     final isCompleted = paid >= total && total > 0;
     final isOverdue = DateTime.now().isAfter(loan.dueDate) && !isCompleted;
 
@@ -617,7 +629,10 @@ class _LoanHistoryCardState extends State<_LoanHistoryCard> {
           // Header row — tap to expand
           InkWell(
             onTap: _toggle,
-            borderRadius: const BorderRadius.only(
+            // NOTE: borderRadius is NOT const because it depends on the
+            // runtime `_expanded` flag (changes the bottom-corner rounding
+            // when the card is expanded vs collapsed).
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(AppRadii.xl),
               topRight: Radius.circular(AppRadii.xl),
               bottomLeft: _expanded
@@ -949,11 +964,13 @@ class _LoanHistoryCardState extends State<_LoanHistoryCard> {
         payments: payments,
         totalPaid: widget.totalPaid,
       );
+      if (!mounted) return;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         const SnackBar(content: Text('PDF report ready — share or save it.')),
       );
     } catch (e) {
+      if (!mounted) return;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(content: Text('Failed to generate PDF: $e')),
@@ -1080,7 +1097,6 @@ class _PaymentRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
     final text = Theme.of(context).textTheme;
-    final isMpesa = payment.source == PaymentSource.mpesa;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),

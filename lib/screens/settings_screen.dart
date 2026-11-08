@@ -261,7 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _collapsibleSection(
             icon: Icons.info_outline,
             title: 'About',
-            subtitle: 'v3.3.1+36',
+            subtitle: 'v3.3.2+37',
             initiallyExpanded: false,
             child: _buildAboutContent(),
           ),
@@ -636,7 +636,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Version 3.3.1+36',
+          'Version 3.3.2+37',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 12),
