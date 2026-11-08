@@ -10,6 +10,7 @@ import '../widgets/payment_trend_chart.dart';
 import '../widgets/streak_tracker_card.dart';
 import '../widgets/transactions_table.dart';
 import 'create_loan_screen.dart';
+import 'loan_history_screen.dart';
 import 'manual_payment_screen.dart';
 import 'mpesa_paste_screen.dart';
 import 'payments_screen.dart';
@@ -42,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       _buildHome(provider),
       const PaymentsScreen(),
+      const LoanHistoryScreen(),
       const SettingsScreen(),
     ];
 
@@ -66,6 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'Payments',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history),
+            label: 'History',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
@@ -277,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.notifications_outlined),
               tooltip: 'Settings',
-              onPressed: () => setState(() => _index = 2),
+              onPressed: () => setState(() => _index = 3),
             ),
           ],
         ),
@@ -304,6 +311,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const TransactionsTable(limit: 5),
               const SizedBox(height: AppSpacing.md),
               const PaymentHistoryList(limit: 3, embedded: true),
+              const SizedBox(height: AppSpacing.md),
+              _LoanHistoryCta(
+                activeCount: provider.activeLoans.length,
+                completedCount: provider.completedLoans.length,
+                hiddenCount: provider.hiddenLoans.length,
+                onTap: () => setState(() => _index = 2),
+              ),
             ]),
           ),
         ),
@@ -439,5 +453,136 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 220,
         ),
       );
+  }
+}
+
+/// Compact "Loan history" call-to-action card on the home screen.
+///
+/// Surfaces the new History tab from the home page so users discover that
+/// completed/closed loans are still tracked and reviewable. Tapping jumps
+/// to the History tab.
+class _LoanHistoryCta extends StatelessWidget {
+  final int activeCount;
+  final int completedCount;
+  final int hiddenCount;
+  final VoidCallback onTap;
+
+  const _LoanHistoryCta({
+    required this.activeCount,
+    required this.completedCount,
+    required this.hiddenCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = Theme.of(context).extension<LoanTrackerDesignTokens>()!;
+    final text = Theme.of(context).textTheme;
+
+    final total = activeCount + completedCount + hiddenCount;
+    if (total == 0) return const SizedBox.shrink();
+
+    // Build the count summary line. Prioritises completed loans in the
+    // sub-line since that's the most common reason users reach this CTA
+    // ("where did my paid loans go?").
+    final sub = <String>[];
+    if (completedCount > 0) sub.add('$completedCount completed');
+    if (activeCount > 0) sub.add('$activeCount active');
+    if (hiddenCount > 0) sub.add('$hiddenCount hidden');
+
+    return Material(
+      color: tokens.brandSurface,
+      borderRadius: BorderRadius.circular(AppRadii.xl),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                ),
+                child: Icon(Icons.history_rounded,
+                    size: 20, color: scheme.primary),
+              ),
+              const SizedBox(width: AppSpacing.mdSm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Loan history',
+                      style: text.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sub.join(' • '),
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              if (completedCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: tokens.brandSuccess.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle,
+                          size: 12, color: tokens.brandSuccess),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$completedCount',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: tokens.brandSuccess,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(AppRadii.pill),
+                  ),
+                  child: Text(
+                    '$total total',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.primary,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(Icons.chevron_right,
+                  size: 18, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

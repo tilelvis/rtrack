@@ -50,6 +50,49 @@ class PdfReportService {
     return filePath;
   }
 
+  /// Generate and share a SINGLE combined PDF that contains every
+  /// completed loan (and its payment history) in one document.
+  ///
+  /// Used by the Loan History screen's "Download completed loans" button
+  /// so the user can produce a lifetime repayment record (e.g. to hand to
+  /// a bank, lender, or auditor).
+  ///
+  /// Each loan renders on its own page section with its own totals +
+  /// transaction table. A summary page at the start shows the cumulative
+  /// totals across all completed loans.
+  static Future<String> generateCompletedLoansPdfAndShare({
+    required List<Loan> completedLoans,
+    required Map<String, List<Payment>> paymentsByLoanId,
+    required Map<String, double> totalPaidByLoanId,
+  }) async {
+    final pdf = await _buildCompletedLoansDocument(
+      completedLoans: completedLoans,
+      paymentsByLoanId: paymentsByLoanId,
+      totalPaidByLoanId: totalPaidByLoanId,
+    );
+
+    final bytes = await pdf.save();
+    final tmpDir = await getTemporaryDirectory();
+    final fileName =
+        'completed_loans_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+    final filePath = p.join(tmpDir.path, fileName);
+    await File(filePath).writeAsBytes(bytes);
+
+    final grandTotal = totalPaidByLoanId.values.fold<double>(0, (s, v) => s + v);
+    final loanCount = completedLoans.length;
+
+    await Share.shareXFiles(
+      [XFile(filePath)],
+      subject: 'Completed Loans Report — $loanCount loan${loanCount == 1 ? "" : "s"}',
+      text: 'Lifetime repayment record covering $loanCount completed '
+          'loan${loanCount == 1 ? "" : "s"}. '
+          'Total repaid across all completed loans: '
+          'Ksh ${grandTotal.toStringAsFixed(2)}.',
+    );
+
+    return filePath;
+  }
+
   /// Generate and share a MONTHLY statement PDF for the given loan + month.
   /// Filters payments to only those in the specified [year]/[month].
   /// Returns the path to the saved PDF file.
@@ -104,6 +147,501 @@ class PdfReportService {
     );
 
     return filePath;
+  }
+
+  /// Build a PDF document covering every completed loan in a single
+  /// multi-page document. The first page is a summary; each subsequent
+  /// page section covers one loan.
+  static Future<pw.Document> _buildCompletedLoansDocument({
+    required List<Loan> completedLoans,
+    required Map<String, List<Payment>> paymentsByLoanId,
+    required Map<String, double> totalPaidByLoanId,
+  }) async {
+    final doc = pw.Document(pageMode: PdfPageMode.fullscreen);
+
+    // Color palette (match the single-loan report for consistency)
+    const neonGreen = PdfColor.fromInt(0xFF1FAE0D);
+    const darkText = PdfColor.fromInt(0xFF0A0E14);
+    const mutedText = PdfColor.fromInt(0xFF6B7280);
+    const accent = PdfColor.fromInt(0xFF00A0B0);
+    const lineColor = PdfColor.fromInt(0xFFE5E7EB);
+    const headerBg = PdfColor.fromInt(0xFFF5F7FA);
+
+    final baseFont = pw.Font.helvetica();
+    final boldFont = pw.Font.helveticaBold();
+
+    // Sort completed loans oldest-due-first so the report reads
+    // chronologically.
+    final sortedLoans = List<Loan>.from(completedLoans)
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+    final grandTotalPayable =
+        sortedLoans.fold<double>(0, (s, l) => s + l.totalPayable);
+    final grandTotalPaid =
+        sortedLoans.fold<double>(0, (s, l) => s + (totalPaidByLoanId[l.id] ?? 0));
+    final grandPaymentCount = sortedLoans.fold<int>(
+        0, (s, l) => s + (paymentsByLoanId[l.id]?.length ?? 0));
+
+    // ------------------------------------------------------------------
+    // Page 1 — Summary cover
+    // ------------------------------------------------------------------
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (ctx) => pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'LOAN TRACKER',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 14,
+                    color: neonGreen,
+                    letterSpacing: 2,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Completed Loans — Lifetime Repayment Record',
+                  style: pw.TextStyle(
+                    font: baseFont,
+                    fontSize: 10,
+                    color: mutedText,
+                  ),
+                ),
+              ],
+            ),
+            pw.Text(
+              'Generated ${DateFormat('d MMM y, h:mm a').format(DateTime.now())}',
+              style: pw.TextStyle(
+                font: baseFont,
+                fontSize: 9,
+                color: mutedText,
+              ),
+            ),
+          ],
+        ),
+        footer: (ctx) => pw.Container(
+          alignment: pw.Alignment.center,
+          margin: const pw.EdgeInsets.only(top: 12),
+          child: pw.Text(
+            'Page ${ctx.pageNumber} of ${ctx.pagesCount} • Loan Tracker',
+            style: pw.TextStyle(
+              font: baseFont,
+              fontSize: 9,
+              color: mutedText,
+            ),
+          ),
+        ),
+        build: (ctx) => [
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(16),
+            decoration: pw.BoxDecoration(
+              color: headerBg,
+              borderRadius: pw.BorderRadius.circular(8),
+              border: pw.Border.all(color: lineColor),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  '${sortedLoans.length} Completed Loan${sortedLoans.length == 1 ? "" : "s"}',
+                  style: pw.TextStyle(
+                    font: boldFont,
+                    fontSize: 22,
+                    color: darkText,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  'This document is a complete record of every loan you have '
+                  'fully repaid through LoanTracker. Each loan is detailed '
+                  'on its own page section with full transaction history.',
+                  style: pw.TextStyle(
+                    font: baseFont,
+                    fontSize: 10,
+                    color: mutedText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 16),
+
+          // Grand totals summary
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _summaryCard(
+                'Loans Repaid',
+                '${sortedLoans.length}',
+                accent,
+                baseFont,
+                boldFont,
+                darkText,
+                mutedText,
+                lineColor,
+              ),
+              pw.SizedBox(width: 8),
+              _summaryCard(
+                'Total Repaid',
+                'Ksh ${_fmt(grandTotalPaid)}',
+                neonGreen,
+                baseFont,
+                boldFont,
+                darkText,
+                mutedText,
+                lineColor,
+              ),
+              pw.SizedBox(width: 8),
+              _summaryCard(
+                'Total Borrowed',
+                'Ksh ${_fmt(grandTotalPayable)}',
+                accent,
+                baseFont,
+                boldFont,
+                darkText,
+                mutedText,
+                lineColor,
+              ),
+              pw.SizedBox(width: 8),
+              _summaryCard(
+                'Payments Logged',
+                '$grandPaymentCount',
+                accent,
+                baseFont,
+                boldFont,
+                darkText,
+                mutedText,
+                lineColor,
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 24),
+
+          // Per-loan index
+          pw.Text(
+            'Loans in this report',
+            style: pw.TextStyle(
+              font: boldFont,
+              fontSize: 14,
+              color: darkText,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          ...sortedLoans.asMap().entries.map((entry) {
+            final i = entry.key + 1;
+            final loan = entry.value;
+            final paid = totalPaidByLoanId[loan.id] ?? 0;
+            return pw.Container(
+              margin: const pw.EdgeInsets.only(bottom: 6),
+              padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 8),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: lineColor),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Row(
+                children: [
+                  pw.Container(
+                    width: 22,
+                    height: 22,
+                    alignment: pw.Alignment.center,
+                    decoration: pw.BoxDecoration(
+                      color: neonGreen,
+                      borderRadius: pw.BorderRadius.circular(11),
+                    ),
+                    child: pw.Text(
+                      '$i',
+                      style: pw.TextStyle(
+                        font: boldFont,
+                        fontSize: 10,
+                        color: const PdfColor.fromInt(0xFFFFFFFF),
+                      ),
+                    ),
+                  ),
+                  pw.SizedBox(width: 10),
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          loan.title,
+                          style: pw.TextStyle(
+                            font: boldFont,
+                            fontSize: 12,
+                            color: darkText,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          'Due ${_fmtDate(loan.dueDate)}'
+                          '${loan.lenderName != null && loan.lenderName!.isNotEmpty ? "  •  ${loan.lenderName}" : ""}',
+                          style: pw.TextStyle(
+                            font: baseFont,
+                            fontSize: 9,
+                            color: mutedText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pw.Text(
+                    'Ksh ${_fmt(paid)}',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 12,
+                      color: neonGreen,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+
+    // ------------------------------------------------------------------
+    // One page section per completed loan
+    // ------------------------------------------------------------------
+    for (final loan in sortedLoans) {
+      final payments = paymentsByLoanId[loan.id] ?? const <Payment>[];
+      final totalPaid = totalPaidByLoanId[loan.id] ?? 0.0;
+
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(40),
+          header: (ctx) => pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'LOAN TRACKER',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 14,
+                      color: neonGreen,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    'Completed Loan Report',
+                    style: pw.TextStyle(
+                      font: baseFont,
+                      fontSize: 10,
+                      color: mutedText,
+                    ),
+                  ),
+                ],
+              ),
+              pw.Text(
+                'Generated ${DateFormat('d MMM y, h:mm a').format(DateTime.now())}',
+                style: pw.TextStyle(
+                  font: baseFont,
+                  fontSize: 9,
+                  color: mutedText,
+                ),
+              ),
+            ],
+          ),
+          footer: (ctx) => pw.Container(
+            alignment: pw.Alignment.center,
+            margin: const pw.EdgeInsets.only(top: 12),
+            child: pw.Text(
+              'Page ${ctx.pageNumber} of ${ctx.pagesCount} • Loan Tracker',
+              style: pw.TextStyle(
+                font: baseFont,
+                fontSize: 9,
+                color: mutedText,
+              ),
+            ),
+          ),
+          build: (ctx) => [
+            // COMPLETED badge
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 12),
+              decoration: pw.BoxDecoration(
+                color: const PdfColor.fromInt(0xFFE8F8E0),
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(color: neonGreen, width: 1.2),
+              ),
+              child: pw.Row(
+                children: [
+                  pw.Text(
+                    '✓ COMPLETED',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 12,
+                      color: neonGreen,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  pw.Spacer(),
+                  pw.Text(
+                    'Closed on ${_fmtDate(loan.dueDate)}',
+                    style: pw.TextStyle(
+                      font: baseFont,
+                      fontSize: 10,
+                      color: mutedText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // Loan title block
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(16),
+              decoration: pw.BoxDecoration(
+                color: headerBg,
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(color: lineColor),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    loan.title,
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 22,
+                      color: darkText,
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
+                  pw.Text(
+                    'Principal: Ksh ${_fmt(loan.principal)}    '
+                    '•    Interest: ${loan.interestRate.toStringAsFixed(1)}%    '
+                    '•    Start: ${_fmtDate(loan.startDate)}    '
+                    '•    Due: ${_fmtDate(loan.dueDate)}',
+                    style: pw.TextStyle(
+                      font: baseFont,
+                      fontSize: 10,
+                      color: mutedText,
+                    ),
+                  ),
+                  if (loan.lenderName != null &&
+                      loan.lenderName!.isNotEmpty) ...[
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Lender: ${loan.lenderName}'
+                      '${loan.lenderPhone != null && loan.lenderPhone!.isNotEmpty ? "  •  ${loan.lenderPhone}" : ""}',
+                      style: pw.TextStyle(
+                        font: baseFont,
+                        fontSize: 10,
+                        color: mutedText,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+
+            // Totals row
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _summaryCard(
+                  'Total Payable',
+                  'Ksh ${_fmt(loan.totalPayable)}',
+                  accent,
+                  baseFont,
+                  boldFont,
+                  darkText,
+                  mutedText,
+                  lineColor,
+                ),
+                pw.SizedBox(width: 8),
+                _summaryCard(
+                  'Total Paid',
+                  'Ksh ${_fmt(totalPaid)}',
+                  neonGreen,
+                  baseFont,
+                  boldFont,
+                  darkText,
+                  mutedText,
+                  lineColor,
+                ),
+                pw.SizedBox(width: 8),
+                _summaryCard(
+                  'Balance',
+                  'Ksh 0.00',
+                  neonGreen,
+                  baseFont,
+                  boldFont,
+                  darkText,
+                  mutedText,
+                  lineColor,
+                ),
+                pw.SizedBox(width: 8),
+                _summaryCard(
+                  'Payments',
+                  '${payments.length}',
+                  accent,
+                  baseFont,
+                  boldFont,
+                  darkText,
+                  mutedText,
+                  lineColor,
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 8),
+            _progressBar(1.0, neonGreen, lineColor),
+            pw.SizedBox(height: 24),
+
+            pw.Text(
+              'Transaction History',
+              style: pw.TextStyle(
+                font: boldFont,
+                fontSize: 14,
+                color: darkText,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              '${payments.length} payment${payments.length == 1 ? "" : "s"} recorded',
+              style: pw.TextStyle(
+                font: baseFont,
+                fontSize: 10,
+                color: mutedText,
+              ),
+            ),
+            pw.SizedBox(height: 12),
+
+            _transactionsTable(
+              List<Payment>.from(payments)
+                ..sort((a, b) => a.paidAt.compareTo(b.paidAt)),
+              baseFont,
+              boldFont,
+              darkText,
+              mutedText,
+              lineColor,
+              headerBg,
+              neonGreen,
+              accent,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return doc;
   }
 
   /// Build the PDF document.

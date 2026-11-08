@@ -37,10 +37,15 @@ class LoanProvider extends ChangeNotifier {
   double _totalPaid = 0;
   List<Payment> _recentPayments = [];
 
+  /// Cached total-paid per loan id, so completed-loans detection does not
+  /// require an N+1 query every time the history screen rebuilds.
+  final Map<String, double> _loanTotals = {};
+
   List<Loan> get loans => _loans;
   Loan? get activeLoan => _activeLoan;
   double get totalPaid => _totalPaid;
   List<Payment> get recentPayments => _recentPayments;
+  Map<String, double> get loanTotals => Map.unmodifiable(_loanTotals);
 
   bool _loading = false;
   bool get loading => _loading;
@@ -50,31 +55,29 @@ class LoanProvider extends ChangeNotifier {
     notifyListeners();
     _loans = await _repo.getAllLoans();
 
-    // Auto-hide loans that are past their due date AND fully paid.
+    // Pre-compute total-paid per loan in one pass so the history screen
+    // can resolve completion status synchronously without N+1 queries.
     for (final loan in _loans) {
-      if (!loan.isHidden) {
-        final isPastDue = DateTime.now().isAfter(loan.dueDate);
-        final totalPaid = await _repo.getTotalPaid(loan.id);
-        final isFullyPaid = totalPaid >= loan.totalPayable;
-        if (isPastDue && isFullyPaid) {
-          await _repo.setLoanHidden(loan.id, true);
-        }
-      }
+      _loanTotals[loan.id] = await _repo.getTotalPaid(loan.id);
     }
-    _loans = await _repo.getAllLoans();
 
     if (_activeLoan == null && _loans.isNotEmpty) {
       final visible = _loans.where((l) => !l.isHidden).toList();
       if (visible.isNotEmpty) {
-        visible.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        // Prefer a visible loan that is not yet completed (still has a
+        // balance OR its due date is still in the future).
+        final active = visible.where((l) => !isLoanCompleted(l)).toList()
+          ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
         final now = DateTime.now();
-        final current = visible
+        final current = active
             .where((l) => now.isBefore(l.dueDate) || now.isSameDayAs(l.dueDate))
             .toList();
         if (current.isNotEmpty) {
           await setActiveLoan(current.first.id);
+        } else if (active.isNotEmpty) {
+          await setActiveLoan(active.first.id);
         } else {
-          await setActiveLoan(visible.last.id);
+          await setActiveLoan(visible.first.id);
         }
       } else {
         await setActiveLoan(_loans.first.id);
@@ -87,11 +90,38 @@ class LoanProvider extends ChangeNotifier {
     _refreshWidget();
   }
 
+  /// A loan is "completed" when its due date has passed AND it has been
+  /// fully paid off. This is a derived/computed state — there is no
+  /// `is_completed` column. Completed loans remain visible in the loan
+  /// history screen even though they're not "active" anymore.
+  bool isLoanCompleted(Loan loan) {
+    if (DateTime.now().isBefore(loan.dueDate)) return false;
+    final paid = _loanTotals[loan.id] ?? 0;
+    return paid >= loan.totalPayable;
+  }
+
+  /// Loans that are visible AND not yet completed (the "current" set).
+  List<Loan> get activeLoans =>
+      _loans.where((l) => !l.isHidden && !isLoanCompleted(l)).toList()
+        ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+  /// Loans whose due date has passed AND have been fully paid.
+  /// These stay queryable so the user can review their repayment history.
+  List<Loan> get completedLoans =>
+      _loans.where((l) => !l.isHidden && isLoanCompleted(l)).toList()
+        ..sort((a, b) => b.dueDate.compareTo(a.dueDate));
+
+  /// Loans manually hidden by the user (not the same as completed).
+  List<Loan> get hiddenLoans =>
+      _loans.where((l) => l.isHidden).toList()
+        ..sort((a, b) => b.dueDate.compareTo(a.dueDate));
+
   Future<void> setActiveLoan(String id) async {
     _activeLoan = await _repo.getLoan(id);
     if (_activeLoan != null) {
       _totalPaid = await _repo.getTotalPaid(id);
       _recentPayments = await _repo.getPaymentsForLoan(id);
+      _loanTotals[id] = _totalPaid;
     } else {
       _totalPaid = 0;
       _recentPayments = [];
@@ -109,6 +139,7 @@ class LoanProvider extends ChangeNotifier {
 
   Future<void> closePaidLoan(String id) async {
     await _repo.deleteLoan(id);
+    _loanTotals.remove(id);
     if (_activeLoan?.id == id) _activeLoan = null;
     _loans = await _repo.getAllLoans();
     if (_loans.isNotEmpty) {
@@ -142,8 +173,26 @@ class LoanProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Loan> get visibleLoans => _loans.where((l) => !l.isHidden).toList();
-  List<Loan> get hiddenLoans => _loans.where((l) => l.isHidden).toList();
+  /// All loans NOT manually hidden by the user. Includes both active and
+  /// completed loans. Used by the loan switcher on the home/payments screens.
+  List<Loan> get visibleLoans =>
+      _loans.where((l) => !l.isHidden).toList()
+        ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+
+  /// Fetch the full payment list for ANY loan (active or not). Used by
+  /// the loan-history screen so the user can review every payment on a
+  /// completed/closed loan without first making it active.
+  Future<List<Payment>> getPaymentsForLoan(String loanId) {
+    return _repo.getPaymentsForLoan(loanId);
+  }
+
+  /// Total-paid for ANY loan (cached, falls back to a one-off fetch).
+  Future<double> getTotalPaidForLoan(String loanId) async {
+    if (_loanTotals.containsKey(loanId)) return _loanTotals[loanId]!;
+    final total = await _repo.getTotalPaid(loanId);
+    _loanTotals[loanId] = total;
+    return total;
+  }
 
   Future<bool> addPayment(Payment payment) async {
     try {
@@ -151,6 +200,9 @@ class LoanProvider extends ChangeNotifier {
     } on StateError {
       return false;
     }
+    // Refresh the cached total for the loan this payment belongs to so the
+    // loan-history screen reflects the new balance without a full reload.
+    _loanTotals[payment.loanId] = await _repo.getTotalPaid(payment.loanId);
     if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
     } else {
@@ -165,6 +217,12 @@ class LoanProvider extends ChangeNotifier {
     await _repo.deletePayment(id);
     if (_activeLoan != null) {
       await setActiveLoan(_activeLoan!.id);
+    } else if (_recentPayments.any((p) => p.id == id)) {
+      // Refresh the cache for any loan this deleted payment belonged to.
+      final loanId = _recentPayments.firstWhere((p) => p.id == id).loanId;
+      _loanTotals[loanId] = await _repo.getTotalPaid(loanId);
+      _recentPayments = await _repo.getAllPayments();
+      notifyListeners();
     }
   }
 
